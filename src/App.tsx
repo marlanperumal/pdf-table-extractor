@@ -1,5 +1,5 @@
-import React from 'react';
-import { PDFViewer } from './components/PDFViewer';
+import React from "react";
+import { PDFViewer } from "./components/PDFViewer";
 
 function App() {
   return (

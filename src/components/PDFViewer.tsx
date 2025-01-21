@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { FileUp } from "lucide-react";
+import { FileUp, Minus, Plus, Search } from "lucide-react";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -14,11 +14,75 @@ interface Selection {
   pageNumber: number;
 }
 
+const NavigationButton = ({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+  >
+    {children}
+  </button>
+);
+
+const CoordinateDisplay = ({ x, y }: { x: number; y: number }) => (
+  <div
+    className="fixed bg-black text-white px-2 py-1 text-sm rounded pointer-events-none"
+    style={{ bottom: "1rem", right: "1rem" }}
+  >
+    x: {Math.round(x)}, y: {Math.round(y)}
+  </div>
+);
+
+const SelectionBox = ({
+  selection,
+  scale,
+  pageElementRef,
+}: {
+  selection: Selection;
+  scale: number;
+  pageElementRef: React.RefObject<HTMLDivElement>;
+}) =>
+  pageElementRef.current && (
+    <div
+      style={{
+        position: "absolute",
+        left: `${selection.x * scale}px`,
+        top: `${selection.y * scale}px`,
+        width: `${selection.width * scale}px`,
+        height: `${selection.height * scale}px`,
+        outline: "1px solid blue",
+        backgroundColor: "rgba(0, 0, 255, 0.1)",
+        pointerEvents: "none",
+        transform: `translate(${pageElementRef.current.offsetLeft}px, ${pageElementRef.current.offsetTop}px)`,
+      }}
+    />
+  );
+
+const calculateSelectionFromPoints = (
+  startPoint: { x: number; y: number },
+  currentPoint: { x: number; y: number },
+  currentPage: number
+): Selection => ({
+  x: Math.min(startPoint.x, currentPoint.x),
+  y: Math.min(startPoint.y, currentPoint.y),
+  width: Math.abs(currentPoint.x - startPoint.x),
+  height: Math.abs(currentPoint.y - startPoint.y),
+  pageNumber: currentPage,
+});
+
 export function PDFViewer() {
   const [file, setFile] = useState<File | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [scale, setScale] = useState<number>(1.5);
+  const [scale, setScale] = useState<number>(1.4);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
@@ -73,8 +137,6 @@ export function PDFViewer() {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
     setIsMouseDown(true);
     const coordinates = calculateCoordinates(e.clientX, e.clientY);
     setStartPoint(coordinates);
@@ -83,52 +145,23 @@ export function PDFViewer() {
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
+      e.preventDefault(); // Prevent text selection while dragging
       const currentPoint = calculateCoordinates(e.clientX, e.clientY);
       setMousePosition(currentPoint);
 
       if (!isSelecting || !startPoint || !isMouseDown) return;
 
-      e.preventDefault(); // Prevent text selection while dragging
-
-      const x = Math.min(startPoint.x, currentPoint.x);
-      const y = Math.min(startPoint.y, currentPoint.y);
-      const width = Math.abs(currentPoint.x - startPoint.x);
-      const height = Math.abs(currentPoint.y - startPoint.y);
-
-      setSelection({
-        x,
-        y,
-        width,
-        height,
-        pageNumber: currentPage,
-      });
+      setSelection(
+        calculateSelectionFromPoints(startPoint, currentPoint, currentPage)
+      );
     },
     [isSelecting, startPoint, currentPage, isMouseDown, calculateCoordinates]
   );
 
-  const handleMouseLeave = useCallback(
-    (e: React.MouseEvent) => {
-      setMousePosition(null);
-      if (isMouseDown && startPoint) {
-        e.preventDefault();
-        const currentPoint = calculateCoordinates(e.clientX, e.clientY);
-
-        const x = Math.min(startPoint.x, currentPoint.x);
-        const y = Math.min(startPoint.y, currentPoint.y);
-        const width = Math.abs(currentPoint.x - startPoint.x);
-        const height = Math.abs(currentPoint.y - startPoint.y);
-
-        setSelection({
-          x,
-          y,
-          width,
-          height,
-          pageNumber: currentPage,
-        });
-      }
-    },
-    [isMouseDown, startPoint, calculateCoordinates, currentPage]
-  );
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setMousePosition(null);
+  };
 
   const handleMouseUp = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -137,13 +170,22 @@ export function PDFViewer() {
     setStartPoint(null);
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    // Don't do anything special, just let the default scroll behavior happen
-    // The selection will continue as long as the mouse button is still down
-  };
-
   return (
-    <div className="flex flex-col items-center gap-4 p-4 min-h-screen bg-gray-50">
+    <div
+      className="flex flex-col items-center gap-4 p-4 min-h-screen bg-gray-50"
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const droppedFile = e.dataTransfer.files[0];
+        if (droppedFile?.type === "application/pdf") {
+          setFile(droppedFile);
+        }
+      }}
+    >
       {!file && (
         <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -172,37 +214,56 @@ export function PDFViewer() {
             >
               Clear PDF
             </button>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <button
+                onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
+                className="p-2 bg-gray-500 text-white rounded-full hover:bg-gray-600"
+              >
+                <span className="sr-only">Zoom Out</span>
+                <Minus className="w-5 h-5" />
+              </button>
+              <div className="p-2 bg-gray-500 text-white rounded-full">
+                <Search className="w-5 h-5" />
+              </div>
+              <button
+                onClick={() => setScale((prev) => Math.min(prev + 0.1, 3))}
+                className="p-2 bg-gray-500 text-white rounded-full hover:bg-gray-600"
+              >
+                <span className="sr-only">Zoom In</span>
+                <Plus className="w-5 h-5" />
+              </button>
+              <span className="text-gray-700">
+                Zoom: {(scale * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <NavigationButton
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
               >
                 Previous
-              </button>
+              </NavigationButton>
               <span>
                 Page {currentPage} of {numPages}
               </span>
-              <button
+              <NavigationButton
                 disabled={currentPage >= numPages}
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, numPages))
                 }
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
               >
                 Next
-              </button>
+              </NavigationButton>
             </div>
           </div>
 
           <div
             ref={pageRef}
-            className="relative border rounded-lg shadow-lg bg-white select-none black-crosshair"
+            className="relative outline-0 shadow-lg bg-gray-100 select-none flex justify-center"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseLeave}
-            onWheel={handleWheel}
             style={{
               WebkitUserSelect: "none",
               MozUserSelect: "none",
@@ -213,7 +274,7 @@ export function PDFViewer() {
             <Document
               file={file}
               onLoadSuccess={onDocumentLoadSuccess}
-              className="flex justify-center"
+              className="flex justify-center black-crosshair"
             >
               <Page
                 pageNumber={currentPage}
@@ -221,34 +282,15 @@ export function PDFViewer() {
                 className="relative"
                 inputRef={pageElementRef}
               />
-              {selection && pageElementRef.current && (
-                <div
-                  style={{
-                    position: "absolute",
-                    left: `${selection.x * scale}px`,
-                    top: `${selection.y * scale}px`,
-                    width: `${selection.width * scale}px`,
-                    height: `${selection.height * scale}px`,
-                    border: "2px solid blue",
-                    backgroundColor: "rgba(0, 0, 255, 0.1)",
-                    pointerEvents: "none",
-                    transform: `translate(${pageElementRef.current.offsetLeft}px, ${pageElementRef.current.offsetTop}px)`,
-                  }}
+              {selection && (
+                <SelectionBox
+                  selection={selection}
+                  scale={scale}
+                  pageElementRef={pageElementRef}
                 />
               )}
             </Document>
-            {mousePosition && (
-              <div
-                className="fixed bg-black text-white px-2 py-1 text-sm rounded pointer-events-none"
-                style={{
-                  bottom: "1rem",
-                  right: "1rem",
-                }}
-              >
-                x: {Math.round(mousePosition.x)}, y:{" "}
-                {Math.round(mousePosition.y)}
-              </div>
-            )}
+            {mousePosition && <CoordinateDisplay {...mousePosition} />}
           </div>
 
           {selection && (
