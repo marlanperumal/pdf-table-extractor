@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { FileUp, Minus, Plus, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -23,13 +24,14 @@ const NavigationButton = ({
   disabled?: boolean;
   children: React.ReactNode;
 }) => (
-  <button
+  <Button
     onClick={onClick}
     disabled={disabled}
-    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+    size="lg"
+    className="bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50"
   >
     {children}
-  </button>
+  </Button>
 );
 
 const CoordinateDisplay = ({ x, y }: { x: number; y: number }) => (
@@ -208,30 +210,33 @@ export function PDFViewer() {
       {file && (
         <div className="w-full max-w-4xl">
           <div className="flex justify-between items-center mb-4">
-            <button
+            <Button
               onClick={() => setFile(null)}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              size="lg"
+              className="bg-red-500 text-white rounded hover:bg-red-600"
             >
               Clear PDF
-            </button>
+            </Button>
             <div className="flex items-center gap-2">
-              <button
+              <Button
                 onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
-                className="p-2 bg-gray-500 text-white rounded-full hover:bg-gray-600"
+                size="icon"
+                className="bg-gray-500 text-white rounded-full hover:bg-gray-600"
               >
                 <span className="sr-only">Zoom Out</span>
                 <Minus className="w-5 h-5" />
-              </button>
+              </Button>
               <div className="p-2 bg-gray-500 text-white rounded-full">
                 <Search className="w-5 h-5" />
               </div>
-              <button
+              <Button
                 onClick={() => setScale((prev) => Math.min(prev + 0.1, 3))}
-                className="p-2 bg-gray-500 text-white rounded-full hover:bg-gray-600"
+                className="bg-gray-500 text-white rounded-full hover:bg-gray-600"
+                size="icon"
               >
                 <span className="sr-only">Zoom In</span>
                 <Plus className="w-5 h-5" />
-              </button>
+              </Button>
               <span className="text-gray-700">
                 Zoom: {(scale * 100).toFixed(0)}%
               </span>
