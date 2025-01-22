@@ -2,8 +2,9 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { FileUp, Minus, Plus, Search } from "lucide-react";
+import { Minus, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PDFSelector } from "@/components/PDFSelector";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -68,6 +69,141 @@ const SelectionBox = ({
     />
   );
 
+const SelectionDisplay = ({ selection }: { selection: Selection }) => (
+  <div className="mt-4 p-4 bg-white rounded-lg shadow">
+    <h3 className="font-semibold mb-2">Selection Coordinates:</h3>
+    <pre className="bg-gray-100 p-2 rounded">
+      {JSON.stringify(selection, null, 2)}
+    </pre>
+  </div>
+);
+
+const PDFNav = ({
+  setFile,
+  setScale,
+  setCurrentPage,
+  numPages,
+  scale,
+  currentPage,
+}: {
+  setFile: React.Dispatch<React.SetStateAction<File | null>>;
+  setScale: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  numPages: number;
+  scale: number;
+  currentPage: number;
+}) => (
+  <div className="flex justify-between items-center mb-4">
+    <Button
+      onClick={() => setFile(null)}
+      size="lg"
+      className="bg-red-500 text-white rounded hover:bg-red-600"
+    >
+      Clear PDF
+    </Button>
+    <div className="flex items-center gap-2">
+      <Button
+        onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
+        size="icon"
+        className="bg-gray-500 text-white rounded-full hover:bg-gray-600"
+      >
+        <span className="sr-only">Zoom Out</span>
+        <Minus className="w-5 h-5" />
+      </Button>
+      <div className="p-2 bg-gray-500 text-white rounded-full">
+        <Search className="w-5 h-5" />
+      </div>
+      <Button
+        onClick={() => setScale((prev) => Math.min(prev + 0.1, 3))}
+        className="bg-gray-500 text-white rounded-full hover:bg-gray-600"
+        size="icon"
+      >
+        <span className="sr-only">Zoom In</span>
+        <Plus className="w-5 h-5" />
+      </Button>
+      <span className="text-gray-700">Zoom: {(scale * 100).toFixed(0)}%</span>
+    </div>
+    <div className="flex items-center gap-4">
+      <NavigationButton
+        disabled={currentPage <= 1}
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      >
+        Previous
+      </NavigationButton>
+      <span>
+        Page {currentPage} of {numPages}
+      </span>
+      <NavigationButton
+        disabled={currentPage >= numPages}
+        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, numPages))}
+      >
+        Next
+      </NavigationButton>
+    </div>
+  </div>
+);
+
+const PDFDisplay = ({
+  file,
+  pageRef,
+  pageElementRef,
+  onDocumentLoadSuccess,
+  currentPage,
+  scale,
+  selection,
+  handleMouseDown,
+  handleMouseMove,
+  handleMouseUp,
+  handleMouseLeave,
+}: {
+  file: File;
+  pageRef: React.RefObject<HTMLDivElement>;
+  pageElementRef: React.RefObject<HTMLDivElement>;
+  onDocumentLoadSuccess: ({ numPages }: { numPages: number }) => void;
+  currentPage: number;
+  scale: number;
+  selection: Selection | null;
+  handleMouseDown: (e: React.MouseEvent) => void;
+  handleMouseMove: (e: React.MouseEvent) => void;
+  handleMouseUp: (e: React.MouseEvent) => void;
+  handleMouseLeave: (e: React.MouseEvent) => void;
+}) => (
+  <div
+    ref={pageRef}
+    className="relative outline-0 shadow-lg bg-gray-100 select-none flex justify-center"
+    onMouseDown={handleMouseDown}
+    onMouseMove={handleMouseMove}
+    onMouseUp={handleMouseUp}
+    onMouseLeave={handleMouseLeave}
+    style={{
+      WebkitUserSelect: "none",
+      MozUserSelect: "none",
+      msUserSelect: "none",
+      userSelect: "none",
+    }}
+  >
+    <Document
+      file={file}
+      onLoadSuccess={onDocumentLoadSuccess}
+      className="flex justify-center black-crosshair"
+    >
+      <Page
+        pageNumber={currentPage}
+        scale={scale}
+        className="relative"
+        inputRef={pageElementRef}
+      />
+      {selection && (
+        <SelectionBox
+          selection={selection}
+          scale={scale}
+          pageElementRef={pageElementRef}
+        />
+      )}
+    </Document>
+  </div>
+);
+
 const calculateSelectionFromPoints = (
   startPoint: { x: number; y: number },
   currentPoint: { x: number; y: number },
@@ -112,13 +248,6 @@ export function PDFViewer() {
     window.addEventListener("mouseup", handleGlobalMouseUp);
     return () => window.removeEventListener("mouseup", handleGlobalMouseUp);
   }, [isMouseDown]);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setFile(file);
-    }
-  };
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -188,134 +317,32 @@ export function PDFViewer() {
         }
       }}
     >
-      {!file && (
-        <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <FileUp className="w-12 h-12 mb-3 text-gray-400" />
-            <p className="mb-2 text-sm text-gray-500">
-              <span className="font-semibold">Click to upload</span> or drag and
-              drop
-            </p>
-            <p className="text-xs text-gray-500">PDF files only</p>
-          </div>
-          <input
-            type="file"
-            className="hidden"
-            accept=".pdf"
-            onChange={handleFileChange}
-          />
-        </label>
-      )}
-
+      {!file && <PDFSelector onSelectFile={setFile} />}
       {file && (
         <div className="w-full max-w-4xl">
-          <div className="flex justify-between items-center mb-4">
-            <Button
-              onClick={() => setFile(null)}
-              size="lg"
-              className="bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Clear PDF
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
-                size="icon"
-                className="bg-gray-500 text-white rounded-full hover:bg-gray-600"
-              >
-                <span className="sr-only">Zoom Out</span>
-                <Minus className="w-5 h-5" />
-              </Button>
-              <div className="p-2 bg-gray-500 text-white rounded-full">
-                <Search className="w-5 h-5" />
-              </div>
-              <Button
-                onClick={() => setScale((prev) => Math.min(prev + 0.1, 3))}
-                className="bg-gray-500 text-white rounded-full hover:bg-gray-600"
-                size="icon"
-              >
-                <span className="sr-only">Zoom In</span>
-                <Plus className="w-5 h-5" />
-              </Button>
-              <span className="text-gray-700">
-                Zoom: {(scale * 100).toFixed(0)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <NavigationButton
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              >
-                Previous
-              </NavigationButton>
-              <span>
-                Page {currentPage} of {numPages}
-              </span>
-              <NavigationButton
-                disabled={currentPage >= numPages}
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, numPages))
-                }
-              >
-                Next
-              </NavigationButton>
-            </div>
-          </div>
-
-          <div
-            ref={pageRef}
-            className="relative outline-0 shadow-lg bg-gray-100 select-none flex justify-center"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{
-              WebkitUserSelect: "none",
-              MozUserSelect: "none",
-              msUserSelect: "none",
-              userSelect: "none",
-            }}
-          >
-            <Document
-              file={file}
-              onLoadSuccess={onDocumentLoadSuccess}
-              className="flex justify-center black-crosshair"
-            >
-              <Page
-                pageNumber={currentPage}
-                scale={scale}
-                className="relative"
-                inputRef={pageElementRef}
-              />
-              {selection && (
-                <SelectionBox
-                  selection={selection}
-                  scale={scale}
-                  pageElementRef={pageElementRef}
-                />
-              )}
-            </Document>
-            {mousePosition && <CoordinateDisplay {...mousePosition} />}
-          </div>
-
-          {selection && (
-            <div className="mt-4 p-4 bg-white rounded-lg shadow">
-              <h3 className="font-semibold mb-2">Selection Coordinates:</h3>
-              <pre className="bg-gray-100 p-2 rounded">
-                {JSON.stringify(
-                  {
-                    page: selection.pageNumber,
-                    x: Math.round(selection.x),
-                    y: Math.round(selection.y),
-                    width: Math.round(selection.width),
-                    height: Math.round(selection.height),
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-          )}
+          <PDFNav
+            setFile={setFile}
+            setScale={setScale}
+            setCurrentPage={setCurrentPage}
+            numPages={numPages}
+            scale={scale}
+            currentPage={currentPage}
+          />
+          <PDFDisplay
+            file={file}
+            pageRef={pageRef}
+            pageElementRef={pageElementRef}
+            onDocumentLoadSuccess={onDocumentLoadSuccess}
+            currentPage={currentPage}
+            scale={scale}
+            selection={selection}
+            handleMouseDown={handleMouseDown}
+            handleMouseMove={handleMouseMove}
+            handleMouseUp={handleMouseUp}
+            handleMouseLeave={handleMouseLeave}
+          />
+          {mousePosition && <CoordinateDisplay {...mousePosition} />}
+          {selection && <SelectionDisplay selection={selection} />}
         </div>
       )}
     </div>

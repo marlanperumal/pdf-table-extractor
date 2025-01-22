@@ -1,15 +1,10 @@
-import React from "react";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "./components/ui/resizable";
-import { ConfigPanel } from "./components/config-panel";
-import { PdfViewer } from "./components/pdf-viewer";
+import { PdfViewer } from "@/components/pdf-viewer"
+import { ConfigPanel } from "@/components/config-panel"
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
 
-function App() {
+export default function Page() {
   return (
-    <div className="h-screen flex flex-col">
+    <main className="h-screen flex flex-col">
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel defaultSize={65} minSize={30}>
           <PdfViewer />
@@ -19,8 +14,7 @@ function App() {
           <ConfigPanel />
         </ResizablePanel>
       </ResizablePanelGroup>
-    </div>
-  );
+    </main>
+  )
 }
 
-export default App;
