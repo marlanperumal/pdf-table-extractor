@@ -4,8 +4,8 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "./components/ui/resizable";
-import { ConfigPanel } from "./components/config-panel";
-import { PdfViewer } from "./components/pdf-viewer";
+import { ConfigPanel } from "@/components/config-panel";
+import { PdfViewer } from "@/components/pdf-viewer";
 
 function App() {
   return (
