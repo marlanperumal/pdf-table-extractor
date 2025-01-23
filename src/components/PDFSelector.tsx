@@ -13,7 +13,7 @@ const PDFSelector: React.FC<Props> = ({ onSelectFile }) => {
     }
   };
   return (
-    <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+    <label className="flex flex-col items-center justify-center w-[calc(100%-2rem)] h-64 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 m-6">
       <div className="flex flex-col items-center justify-center pt-5 pb-6">
         <FileUp className="w-12 h-12 mb-3 text-gray-400" />
         <p className="mb-2 text-sm text-gray-500">

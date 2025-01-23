@@ -14,6 +14,20 @@ import { Input } from "@/components/ui/input";
 import { PDFViewer } from "@/components/PDFViewer";
 import { useStore } from "@/store";
 
+const CoordinateDisplay = () => {
+  const currentPosition = useStore((state) => state.currentPosition);
+  return (
+    currentPosition && (
+      <div
+        className="absolute bg-black text-white px-2 py-1 text-sm rounded pointer-events-none"
+        style={{ bottom: "1rem", right: "1rem" }}
+      >
+        x: {Math.round(currentPosition.x)}, y: {Math.round(currentPosition.y)}
+      </div>
+    )
+  );
+};
+
 export function PdfViewer() {
   const setFile = useStore((state) => state.setFile);
   const currentPage = useStore((state) => state.currentPage);
@@ -21,8 +35,9 @@ export function PdfViewer() {
   const increasePage = useStore((state) => state.increasePage);
   const decreasePage = useStore((state) => state.decreasePage);
   const scale = useStore((state) => state.scale);
-  const setScale = useStore((state) => state.setScale);
-
+  const increaseScale = useStore((state) => state.increaseScale);
+  const decreaseScale = useStore((state) => state.decreaseScale);
+  const currentPosition = useStore((state) => state.currentPosition);
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -35,7 +50,7 @@ export function PdfViewer() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-4 border-b p-4">
+      <div className="flex items-center gap-4 border-b py-2 px-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             type="file"
@@ -53,10 +68,11 @@ export function PdfViewer() {
           </Button>
         </form>
       </div>
-      <div className="relative flex-1 overflow-auto p-4">
+      <div className="relative flex-1 overflow-auto bg-gray-100">
         <PDFViewer />
+        {currentPosition && <CoordinateDisplay />}
       </div>
-      <div className="flex items-center justify-between border-t p-4">
+      <div className="flex items-center justify-between border-t px-4 py-2">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
@@ -85,7 +101,8 @@ export function PdfViewer() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setScale((prev) => Math.max(prev - 0.1, 0.5))}
+            onClick={decreaseScale}
+            disabled={scale <= 0.5}
           >
             <Minus className="h-4 w-4" />
           </Button>
@@ -95,7 +112,8 @@ export function PdfViewer() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setScale((prev) => Math.min(prev + 0.1, 3))}
+            onClick={increaseScale}
+            disabled={scale >= 1.5}
           >
             <Plus className="h-4 w-4" />
           </Button>

@@ -27,6 +27,8 @@ type Action = {
   increasePage: () => void;
   decreasePage: () => void;
   setScale: (scale: number | ((scale: number) => number)) => void;
+  increaseScale: () => void;
+  decreaseScale: () => void;
   setCurrentPosition: (
     position:
       | { x: number; y: number }
@@ -74,12 +76,20 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           currentPage: Math.min(state.currentPage + 1, state.totalPages),
+          currentSelection: null,
         }),
         undefined,
         "increasePage"
       ),
     decreasePage: () =>
-      set((state) => ({ currentPage: Math.max(state.currentPage - 1, 1) })),
+      set(
+        (state) => ({
+          currentPage: Math.max(state.currentPage - 1, 1),
+          currentSelection: null,
+        }),
+        undefined,
+        "decreasePage"
+      ),
     setTotalPages: (pages) =>
       set(
         (state) => ({
@@ -88,6 +98,18 @@ export const useStore = create<State & Action>()(
         }),
         undefined,
         "setTotalPages"
+      ),
+    increaseScale: () =>
+      set(
+        (state) => ({ scale: Math.min(state.scale + 0.1, 1.5) }),
+        undefined,
+        "increaseScale"
+      ),
+    decreaseScale: () =>
+      set(
+        (state) => ({ scale: Math.max(state.scale - 0.1, 0.5) }),
+        undefined,
+        "decreaseScale"
       ),
     setScale: (scale) =>
       set(

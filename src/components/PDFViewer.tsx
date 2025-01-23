@@ -8,20 +8,6 @@ import { useStore, Selection } from "@/store";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
-const CoordinateDisplay = () => {
-  const currentPosition = useStore((state) => state.currentPosition);
-  return (
-    currentPosition && (
-      <div
-        className="absolute bg-black text-white px-2 py-1 text-sm rounded pointer-events-none"
-        style={{ bottom: "1rem", right: "1rem" }}
-      >
-        x: {Math.round(currentPosition.x)}, y: {Math.round(currentPosition.y)}
-      </div>
-    )
-  );
-};
-
 const SelectionBox = ({
   selection,
   scale,
@@ -63,7 +49,7 @@ const PDFDisplay = ({
   <Document
     file={file}
     onLoadSuccess={onDocumentLoadSuccess}
-    className="flex justify-center black-crosshair"
+    className="flex justify-center black-crosshair mt-2 shadow-lg"
   >
     <Page
       pageNumber={currentPage}
@@ -93,7 +79,6 @@ export function PDFViewer() {
   const setTotalPages = useStore((state) => state.setTotalPages);
   const currentPage = useStore((state) => state.currentPage);
   const scale = useStore((state) => state.scale);
-  const currentPosition = useStore((state) => state.currentPosition);
   const setCurrentPosition = useStore((state) => state.setCurrentPosition);
   const currentSelection = useStore((state) => state.currentSelection);
   const setCurrentSelection = useStore((state) => state.setCurrentSelection);
@@ -174,7 +159,7 @@ export function PDFViewer() {
 
   return (
     <div
-      className="flex flex-col items-center bg-gray-50"
+      className="flex flex-col items-center"
       onDragOver={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -190,10 +175,10 @@ export function PDFViewer() {
     >
       {!file && <PDFSelector onSelectFile={setFile} />}
       {file && (
-        <div className="w-full max-w-4xl">
+        <div className="w-full">
           <div
             ref={pageRef}
-            className="relative outline-0 shadow-lg bg-gray-100 select-none flex justify-center"
+            className="relative outline-0 bg-gray-100 select-none flex justify-center"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -222,7 +207,6 @@ export function PDFViewer() {
           </div>
         </div>
       )}
-      {currentPosition && <CoordinateDisplay />}
     </div>
   );
 }
