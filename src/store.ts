@@ -51,7 +51,7 @@ export const useStore = create<State & Action>()(
     file: null,
     currentPage: 1,
     totalPages: 1,
-    scale: 1.4,
+    scale: 1,
     currentPosition: null,
     currentSelection: null,
     setFile: (nextFile) =>

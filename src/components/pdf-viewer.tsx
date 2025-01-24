@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,10 +8,11 @@ import {
   Trash,
   Upload,
 } from "lucide-react";
+import icon from "@/red-document-icon.svg";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PDFViewer } from "@/components/PDFViewer";
+import { PdfDisplay } from "@/components/pdf-display";
 import { useStore } from "@/store";
 
 const CoordinateDisplay = () => {
@@ -29,6 +30,7 @@ const CoordinateDisplay = () => {
 };
 
 export function PdfViewer() {
+  const [fileName, setFileName] = useState<string | null>(null);
   const setFile = useStore((state) => state.setFile);
   const currentPage = useStore((state) => state.currentPage);
   const totalPages = useStore((state) => state.totalPages);
@@ -51,14 +53,18 @@ export function PdfViewer() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-4 border-b py-2 px-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <img src={icon} alt="Red Document Icon" className="w-6 h-6" />
+        <span className="ml-[-2] text-lg font-bold">PTE</span>
+        <form onSubmit={handleSubmit} className="flex flex-1 gap-2">
           <Input
             type="file"
             name="file"
             accept=".pdf"
-            className="max-w-[500px]"
+            onChange={(e) => {
+              setFileName(e.target.files?.[0]?.name || null);
+            }}
           />
-          <Button type="submit">
+          <Button type="submit" disabled={!fileName}>
             <Upload className="mr-2 h-4 w-4" />
             Upload
           </Button>
@@ -69,7 +75,7 @@ export function PdfViewer() {
         </form>
       </div>
       <div className="relative flex-1 overflow-auto bg-gray-100">
-        <PDFViewer />
+        <PdfDisplay />
         {currentPosition && <CoordinateDisplay />}
       </div>
       <div className="flex items-center justify-between border-t px-4 py-2">
