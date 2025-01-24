@@ -21,10 +21,10 @@ const SelectionBox = ({
     <div
       style={{
         position: "absolute",
-        left: `${selection.x || 0 * scale}px`,
-        top: `${selection.y || 0 * scale}px`,
-        width: `${selection.width || 0 * scale}px`,
-        height: `${selection.height || 0 * scale}px`,
+        left: `${selection.x! * scale}px`,
+        top: `${selection.y! * scale}px`,
+        width: `${selection.width! * scale}px`,
+        height: `${selection.height! * scale}px`,
         outline: "1px solid blue",
         backgroundColor: "rgba(0, 0, 255, 0.1)",
         pointerEvents: "none",
@@ -115,7 +115,7 @@ export function PdfDisplay() {
         calculateSelectionFromPoints(startPoint, currentPoint)
       );
     },
-    [isSelecting, startPoint, currentPage, isMouseDown, calculateCoordinates]
+    [isSelecting, startPoint, isMouseDown, calculateCoordinates, setCurrentSelection, setCurrentPosition]
   );
 
   const handleMouseLeave = (e: React.MouseEvent) => {
