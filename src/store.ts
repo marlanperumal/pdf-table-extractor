@@ -2,10 +2,10 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 export type Selection = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  x: number | null;
+  y: number | null;
+  width: number | null;
+  height: number | null;
 };
 
 type State = {
@@ -44,6 +44,7 @@ type Action = {
       | null
       | ((selection: Selection | null) => Selection | null)
   ) => void;
+  clearCurrentSelection: () => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -140,6 +141,12 @@ export const useStore = create<State & Action>()(
         }),
         undefined,
         "setCurrentSelection"
+      ),
+    clearCurrentSelection: () =>
+      set(
+        () => ({ currentSelection: null }),
+        undefined,
+        "clearCurrentSelection"
       ),
   }))
 );

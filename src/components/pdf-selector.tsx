@@ -1,15 +1,14 @@
 import React, { useRef, useEffect } from "react";
 import { FileUp } from "lucide-react";
+import { useStore } from "@/store";
 
-type Props = {
-  onSelectFile: (file: File) => void;
-};
 
-const PdfSelector: React.FC<Props> = ({ onSelectFile }) => {
+const PdfSelector = () => {
+  const setFile = useStore((state) => state.setFile);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      onSelectFile(file);
+      setFile(file);
     }
   };
 
