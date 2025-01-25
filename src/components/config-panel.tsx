@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   Save,
   Upload,
-  MousePointerSquare,
+  SquareMousePointer,
   ArrowDownRightFromSquare,
   XSquare,
   BetweenVerticalStart,
@@ -33,7 +33,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,58 +41,64 @@ import { useStore } from "@/store";
 export function ConfigPanel() {
   const currentSelection = useStore((state) => state.currentSelection);
   const setCurrentSelection = useStore((state) => state.setCurrentSelection);
+  const mouseMode = useStore((state) => state.mouseMode);
+  const setMouseMode = useStore((state) => state.setMouseMode);
+  const columns = useStore((state) => state.columns);
+  const addColumn = useStore((state) => state.addColumn);
+  const removeColumn = useStore((state) => state.removeColumn);
+  const setColumn = useStore((state) => state.setColumn);
+  const clearCurrentSelection = useStore(
+    (state) => state.clearCurrentSelection
+  );
   return (
     <div className="flex h-full flex-col gap-4 p-4">
-      <div className="space-y-4">
+      <div className="space-y-4 overflow-y-auto">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <CardTitle>Area Selection</CardTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Toggle
-                      variant="outline"
-                      onClick={() => setCurrentSelection(null)}
-                    >
-                      <MousePointerSquare />
-                    </Toggle>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Select area</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Toggle
-                      variant="outline"
-                      onClick={() => setCurrentSelection(null)}
-                    >
-                      <ArrowDownRightFromSquare />
-                    </Toggle>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Adjust selection</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Toggle
-                      variant="outline"
-                      onClick={() => setCurrentSelection(null)}
-                    >
-                      <XSquare />
-                    </Toggle>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Discard selection</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    variant="outline"
+                    pressed={mouseMode === "select"}
+                    onPressedChange={() => setMouseMode("select")}
+                  >
+                    <SquareMousePointer />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Select area</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Toggle
+                    variant="outline"
+                    pressed={mouseMode === "resize"}
+                    onPressedChange={() => setMouseMode("resize")}
+                  >
+                    <ArrowDownRightFromSquare />
+                  </Toggle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Adjust selection</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => clearCurrentSelection()}
+                  >
+                    <XSquare />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Discard selection</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </CardHeader>
           <CardContent>
@@ -215,36 +220,38 @@ export function ConfigPanel() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <CardTitle>Columns</CardTitle>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Toggle
-                      variant="outline"
-                      onClick={() => setCurrentSelection(null)}
-                    >
-                      <BetweenVerticalStart />
-                    </Toggle>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add column</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Toggle
-                      variant="outline"
-                      onClick={() => setCurrentSelection(null)}
-                    >
-                      <UnfoldHorizontal />
-                    </Toggle>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Adjust column position</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      addColumn({
+                        x:
+                          (currentSelection?.x ?? 0) +
+                          (currentSelection?.width ?? 0),
+                        name: "",
+                        type: "string",
+                      })
+                    }
+                  >
+                    <BetweenVerticalStart />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add column</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" onClick={() => {}}>
+                    <UnfoldHorizontal />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Adjust column position</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </CardHeader>
           <CardContent>
@@ -252,21 +259,52 @@ export function ConfigPanel() {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
+                  <TableHead>Pos</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Data Type</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.from({ length: 4 }).map((_, i) => (
+                {columns.map((column, i) => (
                   <TableRow key={i}>
                     <TableCell>C{i + 1}</TableCell>
                     <TableCell>
-                      <Input placeholder="Column name" />
+                      <Input
+                        type="number"
+                        className="max-w-[110px]"
+                        value={column.x.toFixed(0)}
+                        onChange={(e) => {
+                          setColumn(i, {
+                            ...column,
+                            x: Number(e.target.value),
+                          });
+                        }}
+                      />
                     </TableCell>
                     <TableCell>
-                      <Select>
+                      <Input
+                        placeholder="Column name"
+                        value={column.name}
+                        onChange={(e) => {
+                          setColumn(i, {
+                            ...column,
+                            name: e.target.value,
+                          });
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={column.type}
+                        onValueChange={(value) => {
+                          setColumn(i, {
+                            ...column,
+                            type: value as "string" | "number" | "date",
+                          });
+                        }}
+                      >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder="Data type" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="string">String</SelectItem>
@@ -276,7 +314,11 @@ export function ConfigPanel() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Button variant="outline">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeColumn(i)}
+                      >
                         <Trash2 />
                       </Button>
                     </TableCell>
@@ -297,16 +339,18 @@ export function ConfigPanel() {
         </Card>
       </div>
 
-      <div className="mt-auto space-y-2">
-        <Button className="w-full" variant="outline">
-          <Save className="mr-2 h-4 w-4" />
-          Save Config
-        </Button>
-        <Button className="w-full" variant="outline">
-          <Upload className="mr-2 h-4 w-4" />
-          Load Config
-        </Button>
-        <Button className="w-full">Export CSV</Button>
+      <div className="p-4 bg-white border-t">
+        <div className="space-y-2">
+          <Button className="w-full" variant="outline">
+            <Save className="mr-2 h-4 w-4" />
+            Save Config
+          </Button>
+          <Button className="w-full" variant="outline">
+            <Upload className="mr-2 h-4 w-4" />
+            Load Config
+          </Button>
+          <Button className="w-full">Export CSV</Button>
+        </div>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ import {
   Trash,
   Upload,
 } from "lucide-react";
-import {default as icon} from "@/red-document-icon.svg";
+import { default as icon } from "@/red-document-icon.svg";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +53,7 @@ export function PdfViewer() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-4 border-b py-2 px-4">
-        <img src={icon} alt="Red Document Icon" className="w-6 h-6"/>
+        <img src={icon} alt="Red Document Icon" className="w-6 h-6" />
         <span className="-ml-3 text-lg font-bold">PTE</span>
         <form onSubmit={handleSubmit} className="flex flex-1 gap-2">
           <Input

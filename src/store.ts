@@ -1,23 +1,35 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
-export type Selection = {
+export interface Selection {
   x: number | null;
   y: number | null;
   width: number | null;
   height: number | null;
-};
+}
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface Column {
+  x: number;
+  name: string;
+  type: "string" | "number" | "date";
+}
+
+export type MouseMode = "select" | "move" | "resize";
 
 type State = {
   file: File | null;
   currentPage: number;
   totalPages: number;
   scale: number;
-  currentPosition: {
-    x: number;
-    y: number;
-  } | null;
+  currentPosition: Position | null;
   currentSelection: Selection | null;
+  mouseMode: MouseMode | null;
+  columns: Column[];
 };
 
 type Action = {
@@ -45,6 +57,12 @@ type Action = {
       | ((selection: Selection | null) => Selection | null)
   ) => void;
   clearCurrentSelection: () => void;
+  setMouseMode: (
+    mode: MouseMode | null | ((mode: MouseMode | null) => MouseMode | null)
+  ) => void;
+  addColumn: (column: Column) => void;
+  removeColumn: (index: number) => void;
+  setColumn: (index: number, column: Column) => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -55,6 +73,8 @@ export const useStore = create<State & Action>()(
     scale: 1,
     currentPosition: null,
     currentSelection: null,
+    mouseMode: "select",
+    columns: new Array<Column>(),
     setFile: (nextFile) =>
       set(
         (state) => ({
@@ -144,9 +164,44 @@ export const useStore = create<State & Action>()(
       ),
     clearCurrentSelection: () =>
       set(
-        () => ({ currentSelection: null }),
+        () => ({
+          currentSelection: null,
+          mouseMode: "select",
+        }),
         undefined,
         "clearCurrentSelection"
+      ),
+    setMouseMode: (mode) =>
+      set(
+        (state) => ({
+          mouseMode: typeof mode === "function" ? mode(state.mouseMode) : mode,
+        }),
+        undefined,
+        "setMouseMode"
+      ),
+    addColumn: (column) =>
+      set(
+        (state) => ({
+          columns: [...state.columns, column],
+        }),
+        undefined,
+        "addColumn"
+      ),
+    removeColumn: (index) =>
+      set(
+        (state) => ({
+          columns: state.columns.filter((_, i) => i !== index),
+        }),
+        undefined,
+        "removeColumn"
+      ),
+    setColumn: (index, column) =>
+      set(
+        (state) => ({
+          columns: state.columns.map((c, i) => (i === index ? column : c)),
+        }),
+        undefined,
+        "setColumn"
       ),
   }))
 );
