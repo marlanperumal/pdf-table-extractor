@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from "react";
 import { FileUp } from "lucide-react";
 import { useStore } from "@/store";
 
-
 const PdfSelector = () => {
   const setFile = useStore((state) => state.setFile);
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

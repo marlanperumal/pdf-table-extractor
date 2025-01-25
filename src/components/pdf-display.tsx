@@ -92,6 +92,7 @@ export function PdfDisplay() {
   const setCurrentSelection = useStore((state) => state.setCurrentSelection);
   const mouseMode = useStore((state) => state.mouseMode);
   const columns = useStore((state) => state.columns);
+  const addColumn = useStore((state) => state.addColumn);
   const [isSelecting, setIsSelecting] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
     null
@@ -139,6 +140,8 @@ export function PdfDisplay() {
     setStartPoint(coordinates);
     if (mouseMode === "select") {
       setIsSelecting(true);
+    } else if (mouseMode === "insertColumn") {
+      addColumn({ x: coordinates?.x ?? 0, name: "", type: "string" });
     }
   };
 
@@ -176,6 +179,15 @@ export function PdfDisplay() {
     setStartPoint(null);
   };
 
+  const cursorClass = {
+    select: "black-crosshair",
+    move: "default",
+    resize: "default",
+    insertColumn: "insert-column",
+  };
+
+  const crosshairCursor = cursorClass[mouseMode ?? "select"];
+
   return (
     <div
       className="flex flex-col items-center"
@@ -212,7 +224,7 @@ export function PdfDisplay() {
             <Document
               file={file}
               onLoadSuccess={onDocumentLoadSuccess}
-              className="flex justify-center black-crosshair mt-2 shadow-lg"
+              className={`flex justify-center ${crosshairCursor} mt-2 shadow-lg`}
             >
               <Page
                 pageNumber={currentPage}

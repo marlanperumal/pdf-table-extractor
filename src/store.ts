@@ -19,7 +19,7 @@ export interface Column {
   type: "string" | "number" | "date";
 }
 
-export type MouseMode = "select" | "move" | "resize";
+export type MouseMode = "select" | "move" | "resize" | "insertColumn";
 
 type State = {
   file: File | null;

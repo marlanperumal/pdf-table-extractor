@@ -10,6 +10,7 @@ import {
   BetweenVerticalStart,
   UnfoldHorizontal,
   Trash2,
+  ArrowRightToLine,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -59,13 +60,15 @@ export function ConfigPanel() {
               <CardTitle>Area Selection</CardTitle>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Toggle
-                    variant="outline"
-                    pressed={mouseMode === "select"}
-                    onPressedChange={() => setMouseMode("select")}
-                  >
-                    <SquareMousePointer />
-                  </Toggle>
+                  <div>
+                    <Toggle
+                      variant="outline"
+                      pressed={mouseMode === "select"}
+                      onPressedChange={() => setMouseMode("select")}
+                    >
+                      <SquareMousePointer />
+                    </Toggle>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Select area</p>
@@ -73,13 +76,19 @@ export function ConfigPanel() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Toggle
-                    variant="outline"
-                    pressed={mouseMode === "resize"}
-                    onPressedChange={() => setMouseMode("resize")}
-                  >
-                    <ArrowDownRightFromSquare />
-                  </Toggle>
+                  <div>
+                    <Toggle
+                      variant="outline"
+                      pressed={mouseMode === "resize"}
+                      onPressedChange={() =>
+                        setMouseMode(
+                          mouseMode === "resize" ? "select" : "resize"
+                        )
+                      }
+                    >
+                      <ArrowDownRightFromSquare />
+                    </Toggle>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Adjust selection</p>
@@ -87,13 +96,15 @@ export function ConfigPanel() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => clearCurrentSelection()}
-                  >
-                    <XSquare />
-                  </Button>
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => clearCurrentSelection()}
+                    >
+                      <XSquare />
+                    </Button>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Discard selection</p>
@@ -222,31 +233,57 @@ export function ConfigPanel() {
               <CardTitle>Columns</CardTitle>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() =>
-                      addColumn({
-                        x:
-                          (currentSelection?.x ?? 0) +
-                          (currentSelection?.width ?? 0),
-                        name: "",
-                        type: "string",
-                      })
-                    }
-                  >
-                    <BetweenVerticalStart />
-                  </Button>
+                  <div>
+                    <Toggle
+                      variant="outline"
+                      pressed={mouseMode === "insertColumn"}
+                      onPressedChange={() =>
+                        setMouseMode(
+                          mouseMode === "insertColumn"
+                            ? "select"
+                            : "insertColumn"
+                        )
+                      }
+                    >
+                      <BetweenVerticalStart />
+                    </Toggle>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Add column</p>
+                  <p>Insert column</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" onClick={() => {}}>
-                    <UnfoldHorizontal />
-                  </Button>
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() =>
+                        addColumn({
+                          x:
+                            (currentSelection?.x ?? 0) +
+                            (currentSelection?.width ?? 0),
+                          name: "",
+                          type: "string",
+                        })
+                      }
+                    >
+                      <ArrowRightToLine />
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add column to end</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button variant="outline" size="icon" onClick={() => {}}>
+                      <UnfoldHorizontal />
+                    </Button>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Adjust column position</p>
@@ -314,13 +351,22 @@ export function ConfigPanel() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => removeColumn(i)}
-                      >
-                        <Trash2 />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => removeColumn(i)}
+                            >
+                              <Trash2 />
+                            </Button>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Remove column</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
