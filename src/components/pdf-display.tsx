@@ -4,7 +4,8 @@ import type {} from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { PDFSelector } from "@/components/pdf-selector";
-import { useStore, Selection, Column } from "@/store";
+import { useStore, type Selection, Column } from "@/store";
+import { calculateSelectionFromPoints } from "@/utils/selection";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
@@ -67,19 +68,6 @@ const ColumnGuide = ({
     </div>
   </div>
 );
-
-const calculateSelectionFromPoints = (
-  startPoint: { x: number; y: number } | null,
-  currentPoint: { x: number; y: number } | null
-): Selection | null => {
-  if (!startPoint || !currentPoint) return null;
-  return {
-    x: Math.min(startPoint.x, currentPoint.x),
-    y: Math.min(startPoint.y, currentPoint.y),
-    width: Math.abs(currentPoint.x - startPoint.x),
-    height: Math.abs(currentPoint.y - startPoint.y),
-  };
-};
 
 export function PdfDisplay() {
   const file = useStore((state) => state.file);
