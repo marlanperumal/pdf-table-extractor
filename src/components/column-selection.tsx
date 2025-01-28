@@ -107,7 +107,7 @@ export function ColumnSelection() {
           </Tooltip>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="max-h-[400px] overflow-y-auto">
         <Table>
           <TableHeader>
             <TableRow>
