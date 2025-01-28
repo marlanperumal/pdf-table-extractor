@@ -92,12 +92,9 @@ export function SaveConfig() {
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" onClick={saveConfig}>
-            Save
-          </Button>
           <DialogClose asChild>
-            <Button variant="secondary" type="button">
-              Close
+            <Button type="button" onClick={saveConfig}>
+              Save
             </Button>
           </DialogClose>
         </DialogFooter>

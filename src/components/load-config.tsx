@@ -36,7 +36,6 @@ export function LoadConfig() {
     ) as Config;
     const area = config.layout.default.area;
     const columnPositions = config.layout.default.columns;
-    console.log(config.cleaning);
     setColumns(
       Object.entries(config.columns).map(([key, value], index) => ({
         name: value,
@@ -87,11 +86,8 @@ export function LoadConfig() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Load</Button>
             <DialogClose asChild>
-              <Button variant="secondary" type="button">
-                Close
-              </Button>
+              <Button type="submit">Load</Button>
             </DialogClose>
           </DialogFooter>
         </form>
