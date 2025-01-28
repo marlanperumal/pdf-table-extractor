@@ -63,6 +63,7 @@ type Action = {
   addColumn: (column: Column) => void;
   removeColumn: (index: number) => void;
   setColumn: (index: number, column: Column) => void;
+  setColumns: (columns: Column[]) => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -202,6 +203,14 @@ export const useStore = create<State & Action>()(
         }),
         undefined,
         "setColumn"
+      ),
+    setColumns: (columns) =>
+      set(
+        () => ({
+          columns,
+        }),
+        undefined,
+        "setColumns"
       ),
   }))
 );

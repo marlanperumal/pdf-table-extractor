@@ -1,6 +1,5 @@
 import * as React from "react";
 import {
-  Upload,
   SquareMousePointer,
   ArrowDownRightFromSquare,
   XSquare,
@@ -35,6 +34,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SaveConfig } from "@/components/save-config";
+import { LoadConfig } from "@/components/load-config";
 import { useStore } from "@/store";
 
 export function ConfigPanel() {
@@ -393,10 +393,7 @@ export function ConfigPanel() {
       <div className="p-4 bg-white border-t">
         <div className="space-y-2">
           <SaveConfig />
-          <Button className="w-full" variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Load Config
-          </Button>
+          <LoadConfig />
           <Button className="w-full">Export CSV</Button>
         </div>
       </div>
