@@ -1,8 +1,5 @@
-"use client";
-
 import * as React from "react";
 import {
-  Save,
   Upload,
   SquareMousePointer,
   ArrowDownRightFromSquare,
@@ -37,45 +34,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { SaveConfig } from "@/components/save-config";
 import { useStore } from "@/store";
-
-interface Config {
-  $schema: string;
-  layout: {
-    default: {
-      area: number[];
-      columns: number[];
-    };
-    first?: {
-      area: number[];
-      columns: number[];
-    };
-  };
-  columns: {
-    [key: string]: string;
-  };
-  order: string[];
-  cleaning: {
-    numeric: string[];
-    date: string[];
-    date_format?: string;
-    trans_detail?: string;
-    dropna?: string[];
-  };
-}
-
-const toSnakeCase = (str: string) => str.toLowerCase().replace(/\s+/g, "_");
 
 export function ConfigPanel() {
   const currentSelection = useStore((state) => state.currentSelection);
@@ -89,52 +49,6 @@ export function ConfigPanel() {
   const clearCurrentSelection = useStore(
     (state) => state.clearCurrentSelection
   );
-  const [configFilename, setConfigFilename] = React.useState("config.json");
-
-  const saveConfig = () => {
-    const config: Config = {
-      $schema:
-        "https://raw.githubusercontent.com/marlanperumal/pdf_statement_reader/develop/pdf_statement_reader/config/psr_config.schema.json",
-      layout: {
-        default: {
-          area: [
-            currentSelection?.y ?? 0,
-            currentSelection?.x ?? 0,
-            (currentSelection?.y ?? 0) + (currentSelection?.height ?? 0),
-            (currentSelection?.x ?? 0) + (currentSelection?.width ?? 0),
-          ].map((value) => Math.round(value)),
-          columns: columns.map((column) => Math.round(column.x)),
-        },
-      },
-      columns: Object.fromEntries(
-        columns.map((column) => [toSnakeCase(column.name), column.name])
-      ),
-      order: columns.map((column) => toSnakeCase(column.name)),
-      cleaning: {
-        numeric: columns
-          .filter((column) => column.type === "number")
-          .map((column) => toSnakeCase(column.name)),
-        date: columns
-          .filter((column) => column.type === "date")
-          .map((column) => toSnakeCase(column.name)),
-        date_format: "%d/%m/%Y",
-      },
-    };
-
-    console.log(JSON.stringify(config, null, 2));
-    // Create a blob and download it
-    const blob = new Blob([JSON.stringify(config, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = configFilename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -478,45 +392,7 @@ export function ConfigPanel() {
 
       <div className="p-4 bg-white border-t">
         <div className="space-y-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="w-full" variant="outline">
-                <Save className="mr-2 h-4 w-4" />
-                Save Config
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Save Configuration</DialogTitle>
-                <DialogDescription>
-                  Enter a filename to save the configuration.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="username" className="text-right">
-                    Filename
-                  </Label>
-                  <Input
-                    id="configFilename"
-                    className="col-span-3"
-                    value={configFilename}
-                    onChange={(e) => setConfigFilename(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="button" onClick={saveConfig}>
-                  Save
-                </Button>
-                <DialogClose asChild>
-                  <Button variant="secondary" type="button">
-                    Close
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <SaveConfig />
           <Button className="w-full" variant="outline">
             <Upload className="mr-2 h-4 w-4" />
             Load Config
