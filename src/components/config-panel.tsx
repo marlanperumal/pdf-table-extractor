@@ -1,8 +1,5 @@
-"use client";
-
 import * as React from "react";
 import {
-  Save,
   Upload,
   SquareMousePointer,
   ArrowDownRightFromSquare,
@@ -37,6 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SaveConfig } from "@/components/save-config";
 import { useStore } from "@/store";
 
 export function ConfigPanel() {
@@ -51,6 +49,7 @@ export function ConfigPanel() {
   const clearCurrentSelection = useStore(
     (state) => state.clearCurrentSelection
   );
+
   return (
     <div className="flex h-full flex-col gap-4 p-4">
       <div className="space-y-4 overflow-y-auto">
@@ -80,6 +79,7 @@ export function ConfigPanel() {
                     <Toggle
                       variant="outline"
                       pressed={mouseMode === "resize"}
+                      disabled
                       onPressedChange={() =>
                         setMouseMode(
                           mouseMode === "resize" ? "select" : "resize"
@@ -280,7 +280,12 @@ export function ConfigPanel() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <Button variant="outline" size="icon" onClick={() => {}}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled
+                      onClick={() => {}}
+                    >
                       <UnfoldHorizontal />
                     </Button>
                   </div>
@@ -387,10 +392,7 @@ export function ConfigPanel() {
 
       <div className="p-4 bg-white border-t">
         <div className="space-y-2">
-          <Button className="w-full" variant="outline">
-            <Save className="mr-2 h-4 w-4" />
-            Save Config
-          </Button>
+          <SaveConfig />
           <Button className="w-full" variant="outline">
             <Upload className="mr-2 h-4 w-4" />
             Load Config
