@@ -17,15 +17,15 @@ export function ConfigPanel() {
             <TabsTrigger value="columns">Columns</TabsTrigger>
             <TabsTrigger value="options">Options</TabsTrigger>
           </TabsList>
-          <div className="flex-1 overflow-y-auto">
-            <TabsContent value="layout" className="h-full">
+          <div className="flex-1 h-full overflow-y-auto">
+            <TabsContent value="layout">
               <div className="space-y-4 pb-4">
                 <AreaSelection />
                 <ColumnSelection />
               </div>
             </TabsContent>
-            <TabsContent value="columns" className="h-full"></TabsContent>
-            <TabsContent value="options" className="h-full">
+            <TabsContent value="columns"></TabsContent>
+            <TabsContent value="options">
               <ConfigOptions />
             </TabsContent>
           </div>

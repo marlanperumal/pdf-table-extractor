@@ -1,4 +1,10 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import type {} from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -76,11 +82,29 @@ export function PdfDisplay() {
   const currentPage = useStore((state) => state.currentPage);
   const scale = useStore((state) => state.scale);
   const setCurrentPosition = useStore((state) => state.setCurrentPosition);
-  const currentSelection = useStore((state) => state.currentSelection);
+  // const currentSelection = useStore((state) => state.currentSelection);
   const setCurrentSelection = useStore((state) => state.setCurrentSelection);
+  const setArea = useStore((state) => state.setArea);
   const mouseMode = useStore((state) => state.mouseMode);
   const columns = useStore((state) => state.columns);
   const addColumn = useStore((state) => state.addColumn);
+
+  const selectionPage = useStore((state) => state.selectionPage);
+  const currentArea = useStore(
+    (state) => state.config.layout[selectionPage]?.area ?? []
+  );
+  const currentSelection = useMemo(
+    () =>
+      currentArea.length === 4
+        ? {
+            x: currentArea?.[1] ?? null,
+            y: currentArea?.[0] ?? null,
+            width: (currentArea?.[3] ?? 0) - (currentArea?.[1] ?? 0),
+            height: (currentArea?.[2] ?? 0) - (currentArea?.[0] ?? 0),
+          }
+        : null,
+    [currentArea]
+  );
   const [isSelecting, setIsSelecting] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
     null
@@ -141,9 +165,17 @@ export function PdfDisplay() {
 
       if (!isSelecting || !startPoint || !isMouseDown) return;
 
-      setCurrentSelection(
-        calculateSelectionFromPoints(startPoint, currentPoint)
-      );
+      const selection = calculateSelectionFromPoints(startPoint, currentPoint);
+      setCurrentSelection(selection);
+      const area = currentPoint
+        ? [
+            Math.min(startPoint.y, currentPoint.y),
+            Math.min(startPoint.x, currentPoint.x),
+            Math.max(startPoint.y, currentPoint.y),
+            Math.max(startPoint.x, currentPoint.x),
+          ]
+        : [];
+      setArea(area);
     },
     [
       isSelecting,
@@ -152,6 +184,7 @@ export function PdfDisplay() {
       calculateCoordinates,
       setCurrentSelection,
       setCurrentPosition,
+      setArea,
     ]
   );
 

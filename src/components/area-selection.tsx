@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
@@ -9,6 +9,9 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   SquareMousePointer,
   ArrowDownRightFromSquare,
@@ -19,71 +22,112 @@ import { useStore } from "@/store";
 export function AreaSelection() {
   const mouseMode = useStore((state) => state.mouseMode);
   const setMouseMode = useStore((state) => state.setMouseMode);
-  const currentSelection = useStore((state) => state.currentSelection);
-  const setCurrentSelection = useStore((state) => state.setCurrentSelection);
+  const selectionPage = useStore((state) => state.selectionPage);
+  const setSelectionPage = useStore((state) => state.setSelectionPage);
+  const currentArea = useStore(
+    (state) => state.config.layout[selectionPage]?.area
+  );
+  const setCurrentArea = useStore((state) => state.setArea);
   const clearCurrentSelection = useStore(
     (state) => state.clearCurrentSelection
+  );
+  const perPage = useStore((state) => state.perPage);
+  const setPerPage = useStore((state) => state.setPerPage);
+
+  const handleAreaChange = useCallback(
+    (index: number, value: number | null) => {
+      setCurrentArea((prev) => {
+        const newArea = [...prev];
+        newArea[index] = value;
+        return newArea;
+      });
+    },
+    [setCurrentArea]
   );
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <CardTitle>Area Selection</CardTitle>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Toggle
-                  variant="outline"
-                  pressed={mouseMode === "select"}
-                  onPressedChange={() => setMouseMode("select")}
-                >
-                  <SquareMousePointer />
-                </Toggle>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Select area</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Toggle
-                  variant="outline"
-                  pressed={mouseMode === "resize"}
-                  disabled
-                  onPressedChange={() =>
-                    setMouseMode(mouseMode === "resize" ? "select" : "resize")
-                  }
-                >
-                  <ArrowDownRightFromSquare />
-                </Toggle>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Adjust selection</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => clearCurrentSelection()}
-                >
-                  <XSquare />
-                </Button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Discard selection</p>
-            </TooltipContent>
-          </Tooltip>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle>Area Selection</CardTitle>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Toggle
+                    variant="outline"
+                    pressed={mouseMode === "select"}
+                    onPressedChange={() => setMouseMode("select")}
+                  >
+                    <SquareMousePointer />
+                  </Toggle>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Select area</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Toggle
+                    variant="outline"
+                    pressed={mouseMode === "resize"}
+                    disabled
+                    onPressedChange={() =>
+                      setMouseMode(mouseMode === "resize" ? "select" : "resize")
+                    }
+                  >
+                    <ArrowDownRightFromSquare />
+                  </Toggle>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Adjust selection</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => clearCurrentSelection()}
+                  >
+                    <XSquare />
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Discard selection</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="flex items-center space-x-2 justify-end">
+            <Switch
+              id="per-page"
+              checked={perPage}
+              onCheckedChange={setPerPage}
+            />
+            <Label htmlFor="per-page">First page</Label>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
+        {perPage && (
+          <Tabs
+            className="h-full flex flex-col"
+            value={selectionPage}
+            onValueChange={(value) =>
+              setSelectionPage(value as "default" | "first")
+            }
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="default">Default</TabsTrigger>
+              <TabsTrigger value="first">First Page</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
         <Table>
           <TableBody>
             <TableRow>
@@ -92,23 +136,8 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Top (Y1)"
-                  value={
-                    currentSelection?.y ? currentSelection?.y.toFixed(0) : ""
-                  }
-                  onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            y: Number(e.target.value),
-                            height:
-                              (currentSelection?.height ?? 0) +
-                              (currentSelection?.y ?? 0) -
-                              Number(e.target.value),
-                          }
-                        : null
-                    )
-                  }
+                  value={currentArea?.[0] ? currentArea?.[0].toFixed(0) : ""}
+                  onChange={(e) => handleAreaChange(0, Number(e.target.value))}
                 />
               </TableCell>
               <TableCell>Left&nbsp;(X1)</TableCell>
@@ -116,23 +145,8 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Left (X1)"
-                  value={
-                    currentSelection?.x ? currentSelection?.x.toFixed(0) : ""
-                  }
-                  onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            x: Number(e.target.value),
-                            width:
-                              (currentSelection?.width ?? 0) +
-                              (currentSelection?.x ?? 0) -
-                              Number(e.target.value),
-                          }
-                        : null
-                    )
-                  }
+                  value={currentArea?.[1] ? currentArea?.[1].toFixed(0) : ""}
+                  onChange={(e) => handleAreaChange(1, Number(e.target.value))}
                 />
               </TableCell>
             </TableRow>
@@ -142,25 +156,8 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Bottom (Y2)"
-                  value={
-                    currentSelection?.y && currentSelection?.height
-                      ? (
-                          currentSelection?.y + currentSelection?.height
-                        ).toFixed(0)
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            height:
-                              Number(e.target.value) -
-                              (currentSelection?.y ?? 0),
-                          }
-                        : null
-                    )
-                  }
+                  value={currentArea?.[2] ? currentArea?.[2].toFixed(0) : ""}
+                  onChange={(e) => handleAreaChange(2, Number(e.target.value))}
                 />
               </TableCell>
               <TableCell>Right&nbsp;(X2)</TableCell>
@@ -168,25 +165,8 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Right (X2)"
-                  value={
-                    currentSelection?.x && currentSelection?.width
-                      ? (currentSelection?.x + currentSelection?.width).toFixed(
-                          0
-                        )
-                      : ""
-                  }
-                  onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            width:
-                              Number(e.target.value) -
-                              (currentSelection?.x ?? 0),
-                          }
-                        : null
-                    )
-                  }
+                  value={currentArea?.[3] ? currentArea?.[3].toFixed(0) : ""}
+                  onChange={(e) => handleAreaChange(3, Number(e.target.value))}
                 />
               </TableCell>
             </TableRow>

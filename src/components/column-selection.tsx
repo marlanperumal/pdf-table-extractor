@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2 } from "lucide-react";
 
 export function ColumnSelection() {
@@ -39,6 +40,9 @@ export function ColumnSelection() {
   const removeColumn = useStore((state) => state.removeColumn);
   const setColumn = useStore((state) => state.setColumn);
   const currentSelection = useStore((state) => state.currentSelection);
+  const perPage = useStore((state) => state.perPage);
+  const selectionPage = useStore((state) => state.selectionPage);
+  const setSelectionPage = useStore((state) => state.setSelectionPage);
   return (
     <Card>
       <CardHeader>
@@ -108,6 +112,20 @@ export function ColumnSelection() {
         </div>
       </CardHeader>
       <CardContent>
+        {perPage && (
+          <Tabs
+            className="h-full flex flex-col"
+            value={selectionPage}
+            onValueChange={(value) =>
+              setSelectionPage(value as "default" | "first")
+            }
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="default">Default</TabsTrigger>
+              <TabsTrigger value="first">First Page</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
         <Table>
           <TableHeader>
             <TableRow>
