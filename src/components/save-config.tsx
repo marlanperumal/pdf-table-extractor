@@ -19,6 +19,9 @@ import { Input } from "./ui/input";
 export function SaveConfig() {
   const currentSelection = useStore((state) => state.currentSelection);
   const columns = useStore((state) => state.columns);
+  const dateFormat = useStore((state) => state.dateFormat);
+  const transDetail = useStore((state) => state.transDetail);
+  const dropna = useStore((state) => state.dropna);
   const [configFilename, setConfigFilename] = React.useState("config.json");
   const saveConfig = () => {
     const config: Config = {
@@ -46,7 +49,14 @@ export function SaveConfig() {
         date: columns
           .filter((column) => column.type === "date")
           .map((column) => toSnakeCase(column.name)),
-        date_format: "%d/%m/%Y",
+        date_format:
+          dateFormat && dateFormat.length > 0 ? dateFormat : undefined,
+        trans_detail:
+          transDetail && transDetail.length > 0 ? transDetail : undefined,
+        dropna:
+          dropna.length > 0
+            ? dropna.map((column) => toSnakeCase(column))
+            : undefined,
       },
     };
 
@@ -92,12 +102,9 @@ export function SaveConfig() {
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" onClick={saveConfig}>
-            Save
-          </Button>
           <DialogClose asChild>
-            <Button variant="secondary" type="button">
-              Close
+            <Button type="button" onClick={saveConfig}>
+              Save
             </Button>
           </DialogClose>
         </DialogFooter>

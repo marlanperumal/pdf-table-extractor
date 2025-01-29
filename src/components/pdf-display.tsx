@@ -53,7 +53,7 @@ const ColumnGuide = ({
       left: `${column.x * scale}px`,
       top: currentSelection?.y ? currentSelection.y * scale - 20 : 0,
       height: currentSelection?.height
-        ? currentSelection.height * scale + 40
+        ? currentSelection.height * scale + 20
         : 0,
       transform: `translate(${pageElementRef.current?.offsetLeft ?? 0}px, ${
         pageElementRef.current?.offsetTop ?? 0

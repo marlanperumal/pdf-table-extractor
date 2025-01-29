@@ -30,6 +30,9 @@ type State = {
   currentSelection: Selection | null;
   mouseMode: MouseMode | null;
   columns: Column[];
+  dateFormat: string;
+  transDetail: string;
+  dropna: string[];
 };
 
 type Action = {
@@ -64,6 +67,9 @@ type Action = {
   removeColumn: (index: number) => void;
   setColumn: (index: number, column: Column) => void;
   setColumns: (columns: Column[]) => void;
+  setDateFormat: (dateFormat: string) => void;
+  setTransDetail: (transDetail: string) => void;
+  setDropna: (dropna: string[]) => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -76,6 +82,9 @@ export const useStore = create<State & Action>()(
     currentSelection: null,
     mouseMode: "select",
     columns: new Array<Column>(),
+    dateFormat: "%y/%m/%d",
+    transDetail: "below",
+    dropna: [],
     setFile: (nextFile) =>
       set(
         (state) => ({
@@ -212,5 +221,22 @@ export const useStore = create<State & Action>()(
         undefined,
         "setColumns"
       ),
+    setDateFormat: (dateFormat) =>
+      set(
+        () => ({
+          dateFormat,
+        }),
+        undefined,
+        "setDateFormat"
+      ),
+    setTransDetail: (transDetail) =>
+      set(
+        () => ({
+          transDetail,
+        }),
+        undefined,
+        "setTransDetail"
+      ),
+    setDropna: (dropna) => set(() => ({ dropna }), undefined, "setDropna"),
   }))
 );
