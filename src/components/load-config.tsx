@@ -12,13 +12,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useStore } from "@/store";
-import { Config } from "@/utils/config";
+import { Config, fromSnakeCase } from "@/utils/config";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 export function LoadConfig() {
   const setColumns = useStore((state) => state.setColumns);
   const setCurrentSelection = useStore((state) => state.setCurrentSelection);
+  const setDateFormat = useStore((state) => state.setDateFormat);
+  const setTransDetail = useStore((state) => state.setTransDetail);
+  const setDropna = useStore((state) => state.setDropna);
   const [configFile, setConfigFile] = React.useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,6 +56,12 @@ export function LoadConfig() {
       width: area[3] - area[1],
       height: area[2] - area[0],
     });
+    setDateFormat(config.cleaning.date_format ?? "%y/%m/%d");
+    setTransDetail(config.cleaning.trans_detail ?? "");
+    setDropna(
+      config.cleaning.dropna?.map((columnName) => fromSnakeCase(columnName)) ??
+        []
+    );
   };
 
   return (
