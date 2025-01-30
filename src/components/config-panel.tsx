@@ -7,7 +7,8 @@ import { SaveConfig } from "@/components/save-config";
 import { LoadConfig } from "@/components/load-config";
 import { ExportCsv } from "@/components/export-csv";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-export function ConfigPanel() {
+
+export const ConfigPanel = function ConfigPanel() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-hidden p-4">
@@ -24,7 +25,9 @@ export function ConfigPanel() {
                 <ColumnSelection />
               </div>
             </TabsContent>
-            <TabsContent value="columns"></TabsContent>
+            <TabsContent value="columns">
+              {/* Add your columns content here */}
+            </TabsContent>
             <TabsContent value="options">
               <ConfigOptions />
             </TabsContent>
@@ -41,4 +44,4 @@ export function ConfigPanel() {
       </div>
     </div>
   );
-}
+};

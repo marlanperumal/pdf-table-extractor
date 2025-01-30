@@ -14,11 +14,14 @@ import { Label } from "@/components/ui/label";
 import { useStore } from "@/store";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { storeToConfig } from "@/utils/config";
 
 export function SaveConfig() {
-  const config = useStore((state) => state.config);
+  const store = useStore();
   const [configFilename, setConfigFilename] = React.useState("config.json");
+  const disabled = !store.file || !store.columns.length || !store.area.default;
   const saveConfig = () => {
+    const config = storeToConfig(store);
     const blob = new Blob([JSON.stringify(config, null, 2)], {
       type: "application/json",
     });
@@ -35,7 +38,7 @@ export function SaveConfig() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full" variant="outline">
+        <Button className="w-full" variant="outline" disabled={disabled}>
           <Save className="mr-2 h-4 w-4" />
           Save Config
         </Button>

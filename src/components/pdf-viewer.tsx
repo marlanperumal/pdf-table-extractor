@@ -52,7 +52,6 @@ export function PdfViewer() {
     const file = formData.get("file") as File;
     if (file) {
       setFile(file);
-      console.log("uploading file", file.name);
     }
   };
 
@@ -67,7 +66,6 @@ export function PdfViewer() {
             name="file"
             accept=".pdf"
             onChange={(e) => {
-              console.log(e.target.files?.[0]);
               setFileName(e.target.files?.[0]?.name || null);
             }}
           />

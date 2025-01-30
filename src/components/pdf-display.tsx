@@ -4,7 +4,7 @@ import type {} from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { PDFSelector } from "@/components/pdf-selector";
-import { useStore, type Selection } from "@/store";
+import { useStore, type Selection, type Area } from "@/store";
 import { calculateSelectionFromPoints } from "@/utils/selection";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -78,11 +78,11 @@ export function PdfDisplay({
   const setTotalPages = useStore((state) => state.setTotalPages);
   const currentPage = useStore((state) => state.currentPage);
   const scale = useStore((state) => state.scale);
-  const area = useStore(
-    (state) => state.config.layout[state.selectionPage]?.area ?? []
-  );
-  const columnPositions = useStore(
-    (state) => state.config.layout[state.selectionPage]?.columns ?? []
+  const area = useStore((state) => state.area[state.selectionPage]);
+  const columns = useStore((state) => state.columns);
+  const selectionPage = useStore((state) => state.selectionPage);
+  const columnPositions = columns.map(
+    (column) => column.position[selectionPage]
   );
   const setArea = useStore((state) => state.setArea);
   const mouseMode = useStore((state) => state.mouseMode);
@@ -98,18 +98,21 @@ export function PdfDisplay({
   const pageRef = useRef<HTMLDivElement>(null);
   const pageElementRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (area.length === 4) {
-      setSelectionBox({
-        x: area[1] ?? 0,
-        y: area[0] ?? 0,
-        width: (area[3] ?? 0) - (area[1] ?? 0),
-        height: (area[2] ?? 0) - (area[0] ?? 0),
-      });
-    } else {
-      setSelectionBox(null);
+  const areaToSelectionBox = useCallback((area: Area | null) => {
+    if (area) {
+      return {
+        x: area.x1!,
+        y: area.y1!,
+        width: area.x2! - area.x1!,
+        height: area.y2! - area.y1!,
+      };
     }
-  }, [area]);
+    return null;
+  }, []);
+
+  useEffect(() => {
+    setSelectionBox(areaToSelectionBox(area));
+  }, [areaToSelectionBox, area]);
 
   // Add global mouse up listener to handle out-of-bounds release
   useEffect(() => {
@@ -151,7 +154,11 @@ export function PdfDisplay({
       if (mouseMode === "select") {
         setIsSelecting(true);
       } else if (mouseMode === "insertColumn") {
-        addColumn({ x: coordinates?.x ?? 0, name: "", type: "string" });
+        addColumn({
+          name: "",
+          type: "string",
+          position: coordinates?.x ?? 0,
+        });
       }
     },
     [
@@ -185,10 +192,14 @@ export function PdfDisplay({
     ]
   );
 
-  const handleMouseLeave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setCurrentPosition(null);
-  };
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setCurrentPosition(null);
+      setSelectionBox(areaToSelectionBox(area));
+    },
+    [areaToSelectionBox, setCurrentPosition, setSelectionBox, area]
+  );
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent) => {
@@ -198,14 +209,12 @@ export function PdfDisplay({
       if (mouseMode === "select") {
         setIsSelecting(false);
         if (startPoint && currentPoint) {
-          const area = currentPoint
-            ? [
-                Math.min(startPoint.y, currentPoint.y),
-                Math.min(startPoint.x, currentPoint.x),
-                Math.max(startPoint.y, currentPoint.y),
-                Math.max(startPoint.x, currentPoint.x),
-              ]
-            : [];
+          const area = {
+            x1: Math.min(startPoint.x, currentPoint.x),
+            y1: Math.min(startPoint.y, currentPoint.y),
+            x2: Math.max(startPoint.x, currentPoint.x),
+            y2: Math.max(startPoint.y, currentPoint.y),
+          };
           setArea(area);
         }
         setStartPoint(null);

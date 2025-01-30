@@ -11,12 +11,14 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useStore, type Config } from "@/store";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { type Config } from "@/utils/config";
+import { useStore } from "@/store";
 
 export function LoadConfig() {
   const loadConfig = useStore((state) => state.loadConfig);
+
   const [configFile, setConfigFile] = React.useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

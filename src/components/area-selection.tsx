@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
@@ -20,22 +20,9 @@ export function AreaSelection() {
   const mouseMode = useStore((state) => state.mouseMode);
   const setMouseMode = useStore((state) => state.setMouseMode);
   const selectionPage = useStore((state) => state.selectionPage);
-  const currentArea = useStore(
-    (state) => state.config.layout[selectionPage]?.area
-  );
+  const currentArea = useStore((state) => state.area[selectionPage]);
   const setCurrentArea = useStore((state) => state.setArea);
   const clearArea = useStore((state) => state.clearArea);
-
-  const handleAreaChange = useCallback(
-    (index: number, value: number | null) => {
-      setCurrentArea((prev) => {
-        const newArea = [...prev];
-        newArea[index] = value;
-        return newArea;
-      });
-    },
-    [setCurrentArea]
-  );
 
   return (
     <Card>
@@ -104,8 +91,13 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Top (Y1)"
-                  value={currentArea?.[0] ? currentArea?.[0].toFixed(0) : ""}
-                  onChange={(e) => handleAreaChange(0, Number(e.target.value))}
+                  value={currentArea ? currentArea.y1.toFixed(0) : ""}
+                  onChange={(e) =>
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      y1: Number(e.target.value),
+                    })
+                  }
                 />
               </TableCell>
               <TableCell>Left&nbsp;(X1)</TableCell>
@@ -113,8 +105,13 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Left (X1)"
-                  value={currentArea?.[1] ? currentArea?.[1].toFixed(0) : ""}
-                  onChange={(e) => handleAreaChange(1, Number(e.target.value))}
+                  value={currentArea ? currentArea.x1.toFixed(0) : ""}
+                  onChange={(e) =>
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      x1: Number(e.target.value),
+                    })
+                  }
                 />
               </TableCell>
             </TableRow>
@@ -124,8 +121,13 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Bottom (Y2)"
-                  value={currentArea?.[2] ? currentArea?.[2].toFixed(0) : ""}
-                  onChange={(e) => handleAreaChange(2, Number(e.target.value))}
+                  value={currentArea ? currentArea.y2.toFixed(0) : ""}
+                  onChange={(e) =>
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      y2: Number(e.target.value),
+                    })
+                  }
                 />
               </TableCell>
               <TableCell>Right&nbsp;(X2)</TableCell>
@@ -133,8 +135,13 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Right (X2)"
-                  value={currentArea?.[3] ? currentArea?.[3].toFixed(0) : ""}
-                  onChange={(e) => handleAreaChange(3, Number(e.target.value))}
+                  value={currentArea ? currentArea.x2.toFixed(0) : ""}
+                  onChange={(e) =>
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      x2: Number(e.target.value),
+                    })
+                  }
                 />
               </TableCell>
             </TableRow>
