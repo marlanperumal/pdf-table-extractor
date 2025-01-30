@@ -9,9 +9,6 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   SquareMousePointer,
   ArrowDownRightFromSquare,
@@ -23,16 +20,11 @@ export function AreaSelection() {
   const mouseMode = useStore((state) => state.mouseMode);
   const setMouseMode = useStore((state) => state.setMouseMode);
   const selectionPage = useStore((state) => state.selectionPage);
-  const setSelectionPage = useStore((state) => state.setSelectionPage);
   const currentArea = useStore(
     (state) => state.config.layout[selectionPage]?.area
   );
   const setCurrentArea = useStore((state) => state.setArea);
-  const clearCurrentSelection = useStore(
-    (state) => state.clearCurrentSelection
-  );
-  const perPage = useStore((state) => state.perPage);
-  const setPerPage = useStore((state) => state.setPerPage);
+  const clearArea = useStore((state) => state.clearArea);
 
   const handleAreaChange = useCallback(
     (index: number, value: number | null) => {
@@ -48,86 +40,62 @@ export function AreaSelection() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CardTitle>Area Selection</CardTitle>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Toggle
-                    variant="outline"
-                    pressed={mouseMode === "select"}
-                    onPressedChange={() => setMouseMode("select")}
-                  >
-                    <SquareMousePointer />
-                  </Toggle>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Select area</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Toggle
-                    variant="outline"
-                    pressed={mouseMode === "resize"}
-                    disabled
-                    onPressedChange={() =>
-                      setMouseMode(mouseMode === "resize" ? "select" : "resize")
-                    }
-                  >
-                    <ArrowDownRightFromSquare />
-                  </Toggle>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Adjust selection</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => clearCurrentSelection()}
-                  >
-                    <XSquare />
-                  </Button>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Discard selection</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="flex items-center space-x-2 justify-end">
-            <Switch
-              id="per-page"
-              checked={perPage}
-              onCheckedChange={setPerPage}
-            />
-            <Label htmlFor="per-page">First page</Label>
-          </div>
+        <div className="flex items-center gap-2">
+          <CardTitle>Area Selection</CardTitle>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Toggle
+                  variant="outline"
+                  pressed={mouseMode === "select"}
+                  onPressedChange={() => setMouseMode("select")}
+                >
+                  <SquareMousePointer />
+                </Toggle>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Select area</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Toggle
+                  variant="outline"
+                  pressed={mouseMode === "resize"}
+                  disabled
+                  onPressedChange={() =>
+                    setMouseMode(mouseMode === "resize" ? "select" : "resize")
+                  }
+                >
+                  <ArrowDownRightFromSquare />
+                </Toggle>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Adjust selection</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => clearArea()}
+                >
+                  <XSquare />
+                </Button>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Discard selection</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </CardHeader>
       <CardContent>
-        {perPage && (
-          <Tabs
-            className="h-full flex flex-col"
-            value={selectionPage}
-            onValueChange={(value) =>
-              setSelectionPage(value as "default" | "first")
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="default">Default</TabsTrigger>
-              <TabsTrigger value="first">First Page</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
         <Table>
           <TableBody>
             <TableRow>

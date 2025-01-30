@@ -15,9 +15,9 @@ export interface Position {
 }
 
 export interface Column {
-  x: number;
   name: string;
   type: "string" | "number" | "date";
+  x: number;
 }
 
 export interface Config {
@@ -27,7 +27,7 @@ export interface Config {
       area: Array<number | null>;
       columns: Array<number>;
     };
-    first?: {
+    first: {
       area: Array<number | null>;
       columns: Array<number>;
     };
@@ -52,8 +52,6 @@ type State = {
   currentPage: number;
   totalPages: number;
   scale: number;
-  currentPosition: Position | null;
-  currentSelection: Selection | null;
   mouseMode: MouseMode | null;
   perPage: boolean;
   selectionPage: "default" | "first";
@@ -73,22 +71,6 @@ type Action = {
   setScale: (scale: number | ((scale: number) => number)) => void;
   increaseScale: () => void;
   decreaseScale: () => void;
-  setCurrentPosition: (
-    position:
-      | { x: number; y: number }
-      | null
-      | ((position: { x: number; y: number } | null) => {
-          x: number;
-          y: number;
-        } | null)
-  ) => void;
-  setCurrentSelection: (
-    selection:
-      | Selection
-      | null
-      | ((selection: Selection | null) => Selection | null)
-  ) => void;
-  clearCurrentSelection: () => void;
   setMouseMode: (
     mode: MouseMode | null | ((mode: MouseMode | null) => MouseMode | null)
   ) => void;
@@ -97,7 +79,7 @@ type Action = {
   addColumn: (column: Column) => void;
   removeColumn: (index: number) => void;
   setColumn: (index: number, column: Column) => void;
-  setColumns: (columns: Column[]) => void;
+  updateColumnPosition: (index: number, position: number) => void;
   setDateFormat: (dateFormat: string) => void;
   setTransDetail: (transDetail: string) => void;
   setDropna: (dropna: string[]) => void;
@@ -108,6 +90,7 @@ type Action = {
       | Array<number | null>
       | ((area: Array<number | null>) => Array<number | null>)
   ) => void;
+  clearArea: () => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -117,10 +100,9 @@ export const useStore = create<State & Action>()(
     totalPages: 1,
     scale: 1,
     currentPosition: null,
-    currentSelection: null,
     mouseMode: "select",
     perPage: true,
-    selectionPage: "default",
+    selectionPage: "first",
     columns: new Array<Column>(),
     dateFormat: "%y/%m/%d",
     transDetail: "below",
@@ -170,7 +152,7 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           currentPage: Math.min(state.currentPage + 1, state.totalPages),
-          currentSelection: null,
+          selectionPage: "default",
         }),
         undefined,
         "increasePage"
@@ -179,7 +161,7 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           currentPage: Math.max(state.currentPage - 1, 1),
-          currentSelection: null,
+          selectionPage: state.currentPage === 2 ? "first" : "default",
         }),
         undefined,
         "decreasePage"
@@ -213,37 +195,6 @@ export const useStore = create<State & Action>()(
         undefined,
         "setScale"
       ),
-    setCurrentPosition: (position) =>
-      set(
-        (state) => ({
-          currentPosition:
-            typeof position === "function"
-              ? position(state.currentPosition)
-              : position,
-        }),
-        undefined,
-        "setCurrentPosition"
-      ),
-    setCurrentSelection: (selection) =>
-      set(
-        (state) => ({
-          currentSelection:
-            typeof selection === "function"
-              ? selection(state.currentSelection)
-              : selection,
-        }),
-        undefined,
-        "setCurrentSelection"
-      ),
-    clearCurrentSelection: () =>
-      set(
-        () => ({
-          currentSelection: null,
-          mouseMode: "select",
-        }),
-        undefined,
-        "clearCurrentSelection"
-      ),
     setMouseMode: (mode) =>
       set(
         (state) => ({
@@ -272,6 +223,26 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           columns: [...state.columns, column],
+          config: {
+            ...state.config,
+            layout: {
+              ...state.config.layout,
+              default: {
+                columns: [
+                  ...(state.config.layout["default"]?.columns || []),
+                  column.x,
+                ],
+                area: state.config.layout["default"]?.area || [],
+              },
+              first: {
+                columns: [
+                  ...(state.config.layout["first"]?.columns || []),
+                  column.x,
+                ],
+                area: state.config.layout["first"]?.area || [],
+              },
+            },
+          },
         }),
         undefined,
         "addColumn"
@@ -280,9 +251,49 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           columns: state.columns.filter((_, i) => i !== index),
+          config: {
+            ...state.config,
+            layout: {
+              ...state.config.layout,
+              default: {
+                columns: state.config.layout["default"].columns.filter(
+                  (_, i) => i !== index
+                ),
+                area: state.config.layout["default"].area || [],
+              },
+              first: {
+                columns: state.config.layout["first"].columns.filter(
+                  (_, i) => i !== index
+                ),
+                area: state.config.layout["first"].area || [],
+              },
+            },
+          },
         }),
         undefined,
         "removeColumn"
+      ),
+    updateColumnPosition: (index, position) =>
+      set(
+        (state) => ({
+          columns: state.columns.map((c, i) =>
+            i === index ? { ...c, x: position } : c
+          ),
+          config: {
+            ...state.config,
+            layout: {
+              ...state.config.layout,
+              [state.selectionPage]: {
+                columns: state.config.layout[state.selectionPage].columns.map(
+                  (_, i) => (i === index ? position : _)
+                ),
+                area: state.config.layout[state.selectionPage].area || [],
+              },
+            },
+          },
+        }),
+        undefined,
+        "updateColumnPosition"
       ),
     setColumn: (index, column) =>
       set(
@@ -291,14 +302,6 @@ export const useStore = create<State & Action>()(
         }),
         undefined,
         "setColumn"
-      ),
-    setColumns: (columns) =>
-      set(
-        () => ({
-          columns,
-        }),
-        undefined,
-        "setColumns"
       ),
     setDateFormat: (dateFormat) =>
       set(
@@ -328,7 +331,6 @@ export const useStore = create<State & Action>()(
     loadConfig: (config) =>
       set(
         () => {
-          const area = config.layout.default.area;
           const columnPositions = config.layout.default.columns;
           return {
             config,
@@ -343,15 +345,6 @@ export const useStore = create<State & Action>()(
                 x: columnPositions[index],
               })
             ),
-            currentSelection:
-              area.length > 4
-                ? {
-                    x: area[1] ?? 0,
-                    y: area[0] ?? 0,
-                    width: (area[3] ?? 0) - (area[1] ?? 0),
-                    height: (area[2] ?? 0) - (area[0] ?? 0),
-                  }
-                : null,
             dateFormat: config.cleaning.date_format ?? "%y/%m/%d",
             transDetail: config.cleaning.trans_detail ?? "",
             dropna:
@@ -375,13 +368,52 @@ export const useStore = create<State & Action>()(
               ...state.config,
               layout: {
                 ...state.config.layout,
-                [state.selectionPage]: { area: newArea },
+                [state.selectionPage]: {
+                  area: newArea,
+                  columns:
+                    state.config.layout[state.selectionPage]?.columns || [],
+                },
+                [state.selectionPage === "default" ? "first" : "default"]: {
+                  area:
+                    state.config.layout[
+                      state.selectionPage === "default" ? "first" : "default"
+                    ]?.area.length === 4
+                      ? state.config.layout[
+                          state.selectionPage === "default"
+                            ? "first"
+                            : "default"
+                        ]?.area
+                      : newArea,
+                  columns:
+                    state.config.layout[
+                      state.selectionPage === "default" ? "first" : "default"
+                    ]?.columns || [],
+                },
               },
             },
           };
         },
         undefined,
         "setArea"
+      ),
+    clearArea: () =>
+      set(
+        (state) => ({
+          config: {
+            ...state.config,
+            layout: {
+              ...state.config.layout,
+              [state.selectionPage]: {
+                area: [],
+                columns:
+                  state.config.layout[state.selectionPage]?.columns || [],
+              },
+            },
+          },
+          mouseMode: "select",
+        }),
+        undefined,
+        "clearArea"
       ),
   }))
 );

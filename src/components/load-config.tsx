@@ -11,8 +11,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useStore } from "@/store";
-import { Config } from "@/utils/config";
+import { useStore, type Config } from "@/store";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 

@@ -15,8 +15,11 @@ import { Input } from "@/components/ui/input";
 import { PdfDisplay } from "@/components/pdf-display";
 import { useStore } from "@/store";
 
-const CoordinateDisplay = () => {
-  const currentPosition = useStore((state) => state.currentPosition);
+const CoordinateDisplay = ({
+  currentPosition,
+}: {
+  currentPosition: { x: number; y: number } | null;
+}) => {
   return (
     currentPosition && (
       <div
@@ -39,7 +42,10 @@ export function PdfViewer() {
   const scale = useStore((state) => state.scale);
   const increaseScale = useStore((state) => state.increaseScale);
   const decreaseScale = useStore((state) => state.decreaseScale);
-  const currentPosition = useStore((state) => state.currentPosition);
+  const [currentPosition, setCurrentPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -76,8 +82,10 @@ export function PdfViewer() {
         </form>
       </div>
       <div className="relative flex-1 overflow-auto bg-gray-100">
-        <PdfDisplay />
-        {currentPosition && <CoordinateDisplay />}
+        <PdfDisplay setCurrentPosition={setCurrentPosition} />
+        {currentPosition && (
+          <CoordinateDisplay currentPosition={currentPosition} />
+        )}
       </div>
       <div className="flex items-center justify-between border-t px-4 py-2">
         <div className="flex items-center gap-4">

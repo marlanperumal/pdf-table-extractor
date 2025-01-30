@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2 } from "lucide-react";
 
 export function ColumnSelection() {
@@ -39,10 +38,13 @@ export function ColumnSelection() {
   const addColumn = useStore((state) => state.addColumn);
   const removeColumn = useStore((state) => state.removeColumn);
   const setColumn = useStore((state) => state.setColumn);
-  const currentSelection = useStore((state) => state.currentSelection);
-  const perPage = useStore((state) => state.perPage);
-  const selectionPage = useStore((state) => state.selectionPage);
-  const setSelectionPage = useStore((state) => state.setSelectionPage);
+  const columnPositions = useStore(
+    (state) => state.config.layout[state.selectionPage]?.columns ?? []
+  );
+  const updateColumnPosition = useStore((state) => state.updateColumnPosition);
+  const area = useStore(
+    (state) => state.config.layout[state.selectionPage]?.area ?? []
+  );
   return (
     <Card>
       <CardHeader>
@@ -76,9 +78,7 @@ export function ColumnSelection() {
                   size="icon"
                   onClick={() =>
                     addColumn({
-                      x:
-                        (currentSelection?.x ?? 0) +
-                        (currentSelection?.width ?? 0),
+                      x: area[3] ?? 0,
                       name: "",
                       type: "string",
                     })
@@ -112,20 +112,6 @@ export function ColumnSelection() {
         </div>
       </CardHeader>
       <CardContent>
-        {perPage && (
-          <Tabs
-            className="h-full flex flex-col"
-            value={selectionPage}
-            onValueChange={(value) =>
-              setSelectionPage(value as "default" | "first")
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="default">Default</TabsTrigger>
-              <TabsTrigger value="first">First Page</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        )}
         <Table>
           <TableHeader>
             <TableRow>
@@ -143,12 +129,9 @@ export function ColumnSelection() {
                   <Input
                     type="number"
                     className="max-w-[110px]"
-                    value={column.x.toFixed(0)}
+                    value={columnPositions[i]?.toFixed(0) ?? 0}
                     onChange={(e) => {
-                      setColumn(i, {
-                        ...column,
-                        x: Number(e.target.value),
-                      });
+                      updateColumnPosition(i, Number(e.target.value));
                     }}
                   />
                 </TableCell>
