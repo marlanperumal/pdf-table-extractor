@@ -110,8 +110,9 @@ interface ConfigStore {
 }
 
 export function configToStore(config: Config): ConfigStore {
-  const columns = config.order.map((key, index) => {
+  const columns = config.order.map((key) => {
     const value = config.columns[key];
+    const index = Object.keys(config.columns).indexOf(key);
     return {
       name: value,
       type: config.cleaning.numeric.includes(key)

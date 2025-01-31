@@ -82,6 +82,7 @@ type Action = {
   clearArea: () => void;
   loadConfig: (config: Config) => void;
   setUniqueFirstPage: (uniqueFirstPage: boolean) => void;
+  reorderColumns: (oldIndex: number, newIndex: number) => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -210,7 +211,13 @@ export const useStore = create<State & Action>()(
         (state) => ({
           columns: state.columns.map((c, i) =>
             i === index
-              ? { ...c, position: { default: position, first: position } }
+              ? {
+                  ...c,
+                  position: {
+                    ...c.position,
+                    [state.selectionPage]: position,
+                  },
+                }
               : c
           ),
         }),
@@ -277,10 +284,6 @@ export const useStore = create<State & Action>()(
           area: {
             ...state.area,
             [state.selectionPage]: null,
-            [state.selectionPage === "default" ? "first" : "default"]:
-              state.area[
-                state.selectionPage === "default" ? "first" : "default"
-              ] ?? null,
           },
           mouseMode: "select",
         }),
@@ -291,5 +294,12 @@ export const useStore = create<State & Action>()(
       set(() => configToStore(config), undefined, "loadConfig"),
     setUniqueFirstPage: (uniqueFirstPage) =>
       set(() => ({ uniqueFirstPage }), undefined, "setUniqueFirstPage"),
+    reorderColumns: (oldIndex: number, newIndex: number) =>
+      set((state) => {
+        const newColumns = [...state.columns];
+        const [movedColumn] = newColumns.splice(oldIndex, 1);
+        newColumns.splice(newIndex, 0, movedColumn);
+        return { columns: newColumns };
+      }),
   }))
 );
