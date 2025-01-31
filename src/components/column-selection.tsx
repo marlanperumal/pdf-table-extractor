@@ -37,8 +37,14 @@ export function ColumnSelection() {
   const columns = useStore((state) => state.columns);
   const addColumn = useStore((state) => state.addColumn);
   const removeColumn = useStore((state) => state.removeColumn);
-  const setColumn = useStore((state) => state.setColumn);
-  const currentSelection = useStore((state) => state.currentSelection);
+  const updateColumnName = useStore((state) => state.updateColumnName);
+  const updateColumnType = useStore((state) => state.updateColumnType);
+  const selectionPage = useStore((state) => state.selectionPage);
+  const columnPositions = columns.map(
+    (column) => column.position[selectionPage]
+  );
+  const updateColumnPosition = useStore((state) => state.updateColumnPosition);
+  const area = useStore((state) => state.area[state.selectionPage]);
   return (
     <Card>
       <CardHeader>
@@ -72,9 +78,7 @@ export function ColumnSelection() {
                   size="icon"
                   onClick={() =>
                     addColumn({
-                      x:
-                        (currentSelection?.x ?? 0) +
-                        (currentSelection?.width ?? 0),
+                      position: area?.x2 ?? 0,
                       name: "",
                       type: "string",
                     })
@@ -125,12 +129,9 @@ export function ColumnSelection() {
                   <Input
                     type="number"
                     className="max-w-[110px]"
-                    value={column.x.toFixed(0)}
+                    value={Math.round(columnPositions[i])}
                     onChange={(e) => {
-                      setColumn(i, {
-                        ...column,
-                        x: Number(e.target.value),
-                      });
+                      updateColumnPosition(i, Number(e.target.value));
                     }}
                   />
                 </TableCell>
@@ -139,10 +140,7 @@ export function ColumnSelection() {
                     placeholder="Column name"
                     value={column.name}
                     onChange={(e) => {
-                      setColumn(i, {
-                        ...column,
-                        name: e.target.value,
-                      });
+                      updateColumnName(i, e.target.value);
                     }}
                   />
                 </TableCell>
@@ -150,10 +148,10 @@ export function ColumnSelection() {
                   <Select
                     value={column.type}
                     onValueChange={(value) => {
-                      setColumn(i, {
-                        ...column,
-                        type: value as "string" | "number" | "date",
-                      });
+                      updateColumnType(
+                        i,
+                        value as "string" | "number" | "date"
+                      );
                     }}
                   >
                     <SelectTrigger>

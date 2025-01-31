@@ -12,11 +12,15 @@ import { default as icon } from "@/red-document-icon.svg";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { PdfDisplay } from "@/components/pdf-display";
 import { useStore } from "@/store";
 
-const CoordinateDisplay = () => {
-  const currentPosition = useStore((state) => state.currentPosition);
+const CoordinateDisplay = ({
+  currentPosition,
+}: {
+  currentPosition: { x: number; y: number } | null;
+}) => {
   return (
     currentPosition && (
       <div
@@ -39,14 +43,18 @@ export function PdfViewer() {
   const scale = useStore((state) => state.scale);
   const increaseScale = useStore((state) => state.increaseScale);
   const decreaseScale = useStore((state) => state.decreaseScale);
-  const currentPosition = useStore((state) => state.currentPosition);
+  const uniqueFirstPage = useStore((state) => state.uniqueFirstPage);
+  const setUniqueFirstPage = useStore((state) => state.setUniqueFirstPage);
+  const [currentPosition, setCurrentPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const file = formData.get("file") as File;
     if (file) {
       setFile(file);
-      console.log("uploading file", file.name);
     }
   };
 
@@ -61,7 +69,6 @@ export function PdfViewer() {
             name="file"
             accept=".pdf"
             onChange={(e) => {
-              console.log(e.target.files?.[0]);
               setFileName(e.target.files?.[0]?.name || null);
             }}
           />
@@ -76,8 +83,10 @@ export function PdfViewer() {
         </form>
       </div>
       <div className="relative flex-1 overflow-auto bg-gray-100">
-        <PdfDisplay />
-        {currentPosition && <CoordinateDisplay />}
+        <PdfDisplay setCurrentPosition={setCurrentPosition} />
+        {currentPosition && (
+          <CoordinateDisplay currentPosition={currentPosition} />
+        )}
       </div>
       <div className="flex items-center justify-between border-t px-4 py-2">
         <div className="flex items-center gap-4">
@@ -102,6 +111,16 @@ export function PdfViewer() {
             Next
             <ChevronRight className="h-4 w-4" />
           </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            disabled={true}
+            checked={uniqueFirstPage}
+            onCheckedChange={(checked) => {
+              setUniqueFirstPage(checked);
+            }}
+          />
+          <div className="text-sm">Unique first page</div>
         </div>
 
         <div className="flex items-center gap-2">

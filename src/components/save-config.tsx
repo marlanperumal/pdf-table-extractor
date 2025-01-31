@@ -12,54 +12,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useStore } from "@/store";
-import { Config, toSnakeCase } from "@/utils/config";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { storeToConfig } from "@/utils/config";
 
 export function SaveConfig() {
-  const currentSelection = useStore((state) => state.currentSelection);
-  const columns = useStore((state) => state.columns);
-  const dateFormat = useStore((state) => state.dateFormat);
-  const transDetail = useStore((state) => state.transDetail);
-  const dropna = useStore((state) => state.dropna);
+  const store = useStore();
   const [configFilename, setConfigFilename] = React.useState("config.json");
+  const disabled = !store.file || !store.columns.length || !store.area.default;
   const saveConfig = () => {
-    const config: Config = {
-      $schema:
-        "https://raw.githubusercontent.com/marlanperumal/pdf_statement_reader/develop/pdf_statement_reader/config/psr_config.schema.json",
-      layout: {
-        default: {
-          area: [
-            currentSelection?.y ?? 0,
-            currentSelection?.x ?? 0,
-            (currentSelection?.y ?? 0) + (currentSelection?.height ?? 0),
-            (currentSelection?.x ?? 0) + (currentSelection?.width ?? 0),
-          ].map((value) => Math.round(value)),
-          columns: columns.map((column) => Math.round(column.x)),
-        },
-      },
-      columns: Object.fromEntries(
-        columns.map((column) => [toSnakeCase(column.name), column.name])
-      ),
-      order: columns.map((column) => toSnakeCase(column.name)),
-      cleaning: {
-        numeric: columns
-          .filter((column) => column.type === "number")
-          .map((column) => toSnakeCase(column.name)),
-        date: columns
-          .filter((column) => column.type === "date")
-          .map((column) => toSnakeCase(column.name)),
-        date_format:
-          dateFormat && dateFormat.length > 0 ? dateFormat : undefined,
-        trans_detail:
-          transDetail && transDetail.length > 0 ? transDetail : undefined,
-        dropna:
-          dropna.length > 0
-            ? dropna.map((column) => toSnakeCase(column))
-            : undefined,
-      },
-    };
-
+    const config = storeToConfig(store);
     const blob = new Blob([JSON.stringify(config, null, 2)], {
       type: "application/json",
     });
@@ -76,7 +38,7 @@ export function SaveConfig() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full" variant="outline">
+        <Button className="w-full" variant="outline" disabled={disabled}>
           <Save className="mr-2 h-4 w-4" />
           Save Config
         </Button>

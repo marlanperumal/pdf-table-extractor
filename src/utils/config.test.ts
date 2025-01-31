@@ -1,14 +1,53 @@
 import { describe, it, expect } from "vitest";
-import { fromSnakeCase, toSnakeCase } from "./config";
+import { Config, configToStore, storeToConfig } from "@/utils/config";
+import { State } from "@/store";
 
-describe("toSnakeCase", () => {
-  it("converts a string to snake case", () => {
-    expect(toSnakeCase("Hello World")).toBe("hello_world");
+const store: State = {
+  file: null,
+  currentPage: 0,
+  totalPages: 0,
+  scale: 1,
+  columns: [],
+  area: {
+    default: { x1: 0, y1: 0, x2: 0, y2: 0 },
+    first: { x1: 0, y1: 0, x2: 0, y2: 0 },
+  },
+  mouseMode: "select",
+  selectionPage: "first",
+  uniqueFirstPage: true,
+  dateFormat: "%y/%m/%d",
+  transDetail: "all",
+  dropna: [],
+};
+
+const config: Config = {
+  columns: {
+    column_1: "Column 1",
+    column_2: "Column 2",
+  },
+  layout: {
+    default: { area: [0, 0, 0, 0], columns: [0, 1] },
+    first: { area: [0, 0, 0, 0], columns: [0, 1] },
+  },
+  cleaning: {
+    date_format: "%y/%m/%d",
+    trans_detail: "all",
+    dropna: ["column_1"],
+    numeric: ["column_1"],
+    date: ["column_2"],
+  },
+  order: ["column_1", "column_2"],
+  $schema: "",
+};
+
+describe("storeToConfig", () => {
+  it("converts a store to a config", () => {
+    expect(storeToConfig(store)).toBeDefined();
   });
 });
 
-describe("fromSnakeCase", () => {
-  it("converts a snake case string to a normal string", () => {
-    expect(fromSnakeCase("hello_world")).toBe("Hello World");
+describe("configToStore", () => {
+  it("converts a config to a store", () => {
+    expect(configToStore(config)).toBeDefined();
   });
 });

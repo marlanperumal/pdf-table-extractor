@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { Config } from "./utils/config";
+import { configToStore } from "./utils/config";
 
 export interface Selection {
   x: number | null;
@@ -14,22 +16,42 @@ export interface Position {
 }
 
 export interface Column {
-  x: number;
   name: string;
   type: "string" | "number" | "date";
+  position: {
+    default: number;
+    first: number;
+  };
+}
+
+export interface ColumnInput {
+  name: string;
+  type: "string" | "number" | "date";
+  position: number;
+}
+
+export interface Area {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
 export type MouseMode = "select" | "move" | "resize" | "insertColumn";
 
-type State = {
+export type State = {
   file: File | null;
   currentPage: number;
   totalPages: number;
   scale: number;
-  currentPosition: Position | null;
-  currentSelection: Selection | null;
   mouseMode: MouseMode | null;
+  uniqueFirstPage: boolean;
+  selectionPage: "default" | "first";
   columns: Column[];
+  area: {
+    default: Area | null;
+    first: Area | null;
+  };
   dateFormat: string;
   transDetail: string;
   dropna: string[];
@@ -44,32 +66,22 @@ type Action = {
   setScale: (scale: number | ((scale: number) => number)) => void;
   increaseScale: () => void;
   decreaseScale: () => void;
-  setCurrentPosition: (
-    position:
-      | { x: number; y: number }
-      | null
-      | ((position: { x: number; y: number } | null) => {
-          x: number;
-          y: number;
-        } | null)
-  ) => void;
-  setCurrentSelection: (
-    selection:
-      | Selection
-      | null
-      | ((selection: Selection | null) => Selection | null)
-  ) => void;
-  clearCurrentSelection: () => void;
   setMouseMode: (
     mode: MouseMode | null | ((mode: MouseMode | null) => MouseMode | null)
   ) => void;
-  addColumn: (column: Column) => void;
+  setSelectionPage: (selectionPage: "default" | "first") => void;
+  addColumn: (column: ColumnInput) => void;
   removeColumn: (index: number) => void;
-  setColumn: (index: number, column: Column) => void;
-  setColumns: (columns: Column[]) => void;
+  updateColumnName: (index: number, name: string) => void;
+  updateColumnType: (index: number, type: "string" | "number" | "date") => void;
+  updateColumnPosition: (index: number, position: number) => void;
   setDateFormat: (dateFormat: string) => void;
   setTransDetail: (transDetail: string) => void;
   setDropna: (dropna: string[]) => void;
+  setArea: (area: Area) => void;
+  clearArea: () => void;
+  loadConfig: (config: Config) => void;
+  setUniqueFirstPage: (uniqueFirstPage: boolean) => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -79,12 +91,17 @@ export const useStore = create<State & Action>()(
     totalPages: 1,
     scale: 1,
     currentPosition: null,
-    currentSelection: null,
     mouseMode: "select",
+    selectionPage: "first",
     columns: new Array<Column>(),
     dateFormat: "%y/%m/%d",
     transDetail: "below",
     dropna: [],
+    area: {
+      default: null,
+      first: null,
+    },
+    uniqueFirstPage: true,
     setFile: (nextFile) =>
       set(
         (state) => ({
@@ -107,7 +124,7 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           currentPage: Math.min(state.currentPage + 1, state.totalPages),
-          currentSelection: null,
+          selectionPage: "default",
         }),
         undefined,
         "increasePage"
@@ -116,7 +133,7 @@ export const useStore = create<State & Action>()(
       set(
         (state) => ({
           currentPage: Math.max(state.currentPage - 1, 1),
-          currentSelection: null,
+          selectionPage: state.currentPage === 2 ? "first" : "default",
         }),
         undefined,
         "decreasePage"
@@ -150,37 +167,6 @@ export const useStore = create<State & Action>()(
         undefined,
         "setScale"
       ),
-    setCurrentPosition: (position) =>
-      set(
-        (state) => ({
-          currentPosition:
-            typeof position === "function"
-              ? position(state.currentPosition)
-              : position,
-        }),
-        undefined,
-        "setCurrentPosition"
-      ),
-    setCurrentSelection: (selection) =>
-      set(
-        (state) => ({
-          currentSelection:
-            typeof selection === "function"
-              ? selection(state.currentSelection)
-              : selection,
-        }),
-        undefined,
-        "setCurrentSelection"
-      ),
-    clearCurrentSelection: () =>
-      set(
-        () => ({
-          currentSelection: null,
-          mouseMode: "select",
-        }),
-        undefined,
-        "clearCurrentSelection"
-      ),
     setMouseMode: (mode) =>
       set(
         (state) => ({
@@ -189,10 +175,24 @@ export const useStore = create<State & Action>()(
         undefined,
         "setMouseMode"
       ),
+    setSelectionPage: (selectionPage) =>
+      set(
+        () => ({
+          selectionPage,
+        }),
+        undefined,
+        "setSelectionPage"
+      ),
     addColumn: (column) =>
       set(
         (state) => ({
-          columns: [...state.columns, column],
+          columns: [
+            ...state.columns,
+            {
+              ...column,
+              position: { default: column.position, first: column.position },
+            },
+          ],
         }),
         undefined,
         "addColumn"
@@ -205,21 +205,37 @@ export const useStore = create<State & Action>()(
         undefined,
         "removeColumn"
       ),
-    setColumn: (index, column) =>
+    updateColumnPosition: (index, position) =>
       set(
         (state) => ({
-          columns: state.columns.map((c, i) => (i === index ? column : c)),
+          columns: state.columns.map((c, i) =>
+            i === index
+              ? { ...c, position: { default: position, first: position } }
+              : c
+          ),
         }),
         undefined,
-        "setColumn"
+        "updateColumnPosition"
       ),
-    setColumns: (columns) =>
+    updateColumnName: (index, name) =>
       set(
-        () => ({
-          columns,
+        (state) => ({
+          columns: state.columns.map((c, i) =>
+            i === index ? { ...c, name } : c
+          ),
         }),
         undefined,
-        "setColumns"
+        "setColumnName"
+      ),
+    updateColumnType: (index, type) =>
+      set(
+        (state) => ({
+          columns: state.columns.map((c, i) =>
+            i === index ? { ...c, type } : c
+          ),
+        }),
+        undefined,
+        "setColumnType"
       ),
     setDateFormat: (dateFormat) =>
       set(
@@ -238,5 +254,42 @@ export const useStore = create<State & Action>()(
         "setTransDetail"
       ),
     setDropna: (dropna) => set(() => ({ dropna }), undefined, "setDropna"),
+    setArea: (area) =>
+      set(
+        (state) => {
+          return {
+            area: {
+              ...state.area,
+              [state.selectionPage]: area,
+              [state.selectionPage === "default" ? "first" : "default"]:
+                state.area[
+                  state.selectionPage === "default" ? "first" : "default"
+                ] ?? area,
+            },
+          };
+        },
+        undefined,
+        "setArea"
+      ),
+    clearArea: () =>
+      set(
+        (state) => ({
+          area: {
+            ...state.area,
+            [state.selectionPage]: null,
+            [state.selectionPage === "default" ? "first" : "default"]:
+              state.area[
+                state.selectionPage === "default" ? "first" : "default"
+              ] ?? null,
+          },
+          mouseMode: "select",
+        }),
+        undefined,
+        "clearArea"
+      ),
+    loadConfig: (config) =>
+      set(() => configToStore(config), undefined, "loadConfig"),
+    setUniqueFirstPage: (uniqueFirstPage) =>
+      set(() => ({ uniqueFirstPage }), undefined, "setUniqueFirstPage"),
   }))
 );

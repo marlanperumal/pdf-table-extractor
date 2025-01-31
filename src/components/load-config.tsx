@@ -11,17 +11,14 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { type Config } from "@/utils/config";
 import { useStore } from "@/store";
-import { Config, fromSnakeCase } from "@/utils/config";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 
 export function LoadConfig() {
-  const setColumns = useStore((state) => state.setColumns);
-  const setCurrentSelection = useStore((state) => state.setCurrentSelection);
-  const setDateFormat = useStore((state) => state.setDateFormat);
-  const setTransDetail = useStore((state) => state.setTransDetail);
-  const setDropna = useStore((state) => state.setDropna);
+  const loadConfig = useStore((state) => state.loadConfig);
+
   const [configFile, setConfigFile] = React.useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,37 +28,13 @@ export function LoadConfig() {
     }
   };
 
-  const loadConfig = async (e: React.FormEvent<HTMLFormElement>) => {
+  const loadConfigFile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!configFile) return;
     const config = JSON.parse(
       new TextDecoder().decode(await configFile.arrayBuffer())
     ) as Config;
-    const area = config.layout.default.area;
-    const columnPositions = config.layout.default.columns;
-    setColumns(
-      Object.entries(config.columns).map(([key, value], index) => ({
-        name: value,
-        type: config.cleaning.numeric.includes(key)
-          ? "number"
-          : config.cleaning.date.includes(key)
-          ? "date"
-          : "string",
-        x: columnPositions[index],
-      }))
-    );
-    setCurrentSelection({
-      x: area[1],
-      y: area[0],
-      width: area[3] - area[1],
-      height: area[2] - area[0],
-    });
-    setDateFormat(config.cleaning.date_format ?? "%y/%m/%d");
-    setTransDetail(config.cleaning.trans_detail ?? "");
-    setDropna(
-      config.cleaning.dropna?.map((columnName) => fromSnakeCase(columnName)) ??
-        []
-    );
+    loadConfig(config);
   };
 
   return (
@@ -73,7 +46,7 @@ export function LoadConfig() {
         </Button>
       </DialogTrigger>
       <DialogContent>
-        <form onSubmit={loadConfig}>
+        <form onSubmit={loadConfigFile}>
           <DialogHeader>
             <DialogTitle>Save Configuration</DialogTitle>
             <DialogDescription>

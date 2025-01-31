@@ -19,11 +19,10 @@ import { useStore } from "@/store";
 export function AreaSelection() {
   const mouseMode = useStore((state) => state.mouseMode);
   const setMouseMode = useStore((state) => state.setMouseMode);
-  const currentSelection = useStore((state) => state.currentSelection);
-  const setCurrentSelection = useStore((state) => state.setCurrentSelection);
-  const clearCurrentSelection = useStore(
-    (state) => state.clearCurrentSelection
-  );
+  const selectionPage = useStore((state) => state.selectionPage);
+  const currentArea = useStore((state) => state.area[selectionPage]);
+  const setCurrentArea = useStore((state) => state.setArea);
+  const clearArea = useStore((state) => state.clearArea);
 
   return (
     <Card>
@@ -71,7 +70,7 @@ export function AreaSelection() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => clearCurrentSelection()}
+                  onClick={() => clearArea()}
                 >
                   <XSquare />
                 </Button>
@@ -92,22 +91,12 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Top (Y1)"
-                  value={
-                    currentSelection?.y ? currentSelection?.y.toFixed(0) : ""
-                  }
+                  value={currentArea ? currentArea.y1.toFixed(0) : ""}
                   onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            y: Number(e.target.value),
-                            height:
-                              (currentSelection?.height ?? 0) +
-                              (currentSelection?.y ?? 0) -
-                              Number(e.target.value),
-                          }
-                        : null
-                    )
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      y1: Number(e.target.value),
+                    })
                   }
                 />
               </TableCell>
@@ -116,22 +105,12 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Left (X1)"
-                  value={
-                    currentSelection?.x ? currentSelection?.x.toFixed(0) : ""
-                  }
+                  value={currentArea ? currentArea.x1.toFixed(0) : ""}
                   onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            x: Number(e.target.value),
-                            width:
-                              (currentSelection?.width ?? 0) +
-                              (currentSelection?.x ?? 0) -
-                              Number(e.target.value),
-                          }
-                        : null
-                    )
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      x1: Number(e.target.value),
+                    })
                   }
                 />
               </TableCell>
@@ -142,24 +121,12 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Bottom (Y2)"
-                  value={
-                    currentSelection?.y && currentSelection?.height
-                      ? (
-                          currentSelection?.y + currentSelection?.height
-                        ).toFixed(0)
-                      : ""
-                  }
+                  value={currentArea ? currentArea.y2.toFixed(0) : ""}
                   onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            height:
-                              Number(e.target.value) -
-                              (currentSelection?.y ?? 0),
-                          }
-                        : null
-                    )
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      y2: Number(e.target.value),
+                    })
                   }
                 />
               </TableCell>
@@ -168,24 +135,12 @@ export function AreaSelection() {
                 <Input
                   type="number"
                   placeholder="Right (X2)"
-                  value={
-                    currentSelection?.x && currentSelection?.width
-                      ? (currentSelection?.x + currentSelection?.width).toFixed(
-                          0
-                        )
-                      : ""
-                  }
+                  value={currentArea ? currentArea.x2.toFixed(0) : ""}
                   onChange={(e) =>
-                    setCurrentSelection(
-                      currentSelection
-                        ? {
-                            ...currentSelection,
-                            width:
-                              Number(e.target.value) -
-                              (currentSelection?.x ?? 0),
-                          }
-                        : null
-                    )
+                    setCurrentArea({
+                      ...(currentArea || { x1: 0, y1: 0, x2: 0, y2: 0 }),
+                      x2: Number(e.target.value),
+                    })
                   }
                 />
               </TableCell>

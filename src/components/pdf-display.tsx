@@ -4,7 +4,7 @@ import type {} from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { PDFSelector } from "@/components/pdf-selector";
-import { useStore, type Selection, Column } from "@/store";
+import { useStore, type Selection, type Area } from "@/store";
 import { calculateSelectionFromPoints } from "@/utils/selection";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
@@ -14,11 +14,12 @@ const SelectionBox = ({
   scale,
   pageElementRef,
 }: {
-  selection: Selection;
+  selection: Selection | null;
   scale: number;
   pageElementRef: React.RefObject<HTMLDivElement>;
 }) =>
-  pageElementRef.current && (
+  pageElementRef.current &&
+  selection && (
     <div
       style={{
         position: "absolute",
@@ -36,25 +37,23 @@ const SelectionBox = ({
 
 const ColumnGuide = ({
   index,
-  column,
+  position,
   scale,
   pageElementRef,
-  currentSelection,
+  selection,
 }: {
   index: number;
-  column: Column;
+  position: number;
   scale: number;
   pageElementRef: React.RefObject<HTMLDivElement>;
-  currentSelection: Selection;
+  selection: Selection;
 }) => (
   <div
     className="absolute border-l-2 border-red-500"
     style={{
-      left: `${column.x * scale}px`,
-      top: currentSelection?.y ? currentSelection.y * scale - 20 : 0,
-      height: currentSelection?.height
-        ? currentSelection.height * scale + 20
-        : 0,
+      left: `${position * scale}px`,
+      top: selection?.y ? selection.y * scale - 20 : 0,
+      height: selection?.height ? selection.height * scale + 20 : 0,
       transform: `translate(${pageElementRef.current?.offsetLeft ?? 0}px, ${
         pageElementRef.current?.offsetTop ?? 0
       }px)`,
@@ -69,26 +68,51 @@ const ColumnGuide = ({
   </div>
 );
 
-export function PdfDisplay() {
+export function PdfDisplay({
+  setCurrentPosition,
+}: {
+  setCurrentPosition: (position: { x: number; y: number } | null) => void;
+}) {
   const file = useStore((state) => state.file);
   const setFile = useStore((state) => state.setFile);
   const setTotalPages = useStore((state) => state.setTotalPages);
   const currentPage = useStore((state) => state.currentPage);
   const scale = useStore((state) => state.scale);
-  const setCurrentPosition = useStore((state) => state.setCurrentPosition);
-  const currentSelection = useStore((state) => state.currentSelection);
-  const setCurrentSelection = useStore((state) => state.setCurrentSelection);
-  const mouseMode = useStore((state) => state.mouseMode);
+  const area = useStore((state) => state.area[state.selectionPage]);
   const columns = useStore((state) => state.columns);
+  const selectionPage = useStore((state) => state.selectionPage);
+  const columnPositions = columns.map(
+    (column) => column.position[selectionPage]
+  );
+  const setArea = useStore((state) => state.setArea);
+  const mouseMode = useStore((state) => state.mouseMode);
   const addColumn = useStore((state) => state.addColumn);
+
   const [isSelecting, setIsSelecting] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
     null
   );
   const [isMouseDown, setIsMouseDown] = useState(false);
+  const [selectionBox, setSelectionBox] = useState<Selection | null>(null);
 
   const pageRef = useRef<HTMLDivElement>(null);
   const pageElementRef = useRef<HTMLDivElement>(null);
+
+  const areaToSelectionBox = useCallback((area: Area | null) => {
+    if (area) {
+      return {
+        x: area.x1!,
+        y: area.y1!,
+        width: area.x2! - area.x1!,
+        height: area.y2! - area.y1!,
+      };
+    }
+    return null;
+  }, []);
+
+  useEffect(() => {
+    setSelectionBox(areaToSelectionBox(area));
+  }, [areaToSelectionBox, area]);
 
   // Add global mouse up listener to handle out-of-bounds release
   useEffect(() => {
@@ -121,17 +145,31 @@ export function PdfDisplay() {
     [scale]
   );
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsMouseDown(true);
-    const coordinates = calculateCoordinates(e.clientX, e.clientY);
-    setStartPoint(coordinates);
-    if (mouseMode === "select") {
-      setIsSelecting(true);
-    } else if (mouseMode === "insertColumn") {
-      addColumn({ x: coordinates?.x ?? 0, name: "", type: "string" });
-    }
-  };
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsMouseDown(true);
+      const coordinates = calculateCoordinates(e.clientX, e.clientY);
+      setStartPoint(coordinates);
+      if (mouseMode === "select") {
+        setIsSelecting(true);
+      } else if (mouseMode === "insertColumn") {
+        addColumn({
+          name: "",
+          type: "string",
+          position: coordinates?.x ?? 0,
+        });
+      }
+    },
+    [
+      calculateCoordinates,
+      addColumn,
+      setStartPoint,
+      setIsSelecting,
+      setIsMouseDown,
+      mouseMode,
+    ]
+  );
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -141,31 +179,56 @@ export function PdfDisplay() {
 
       if (!isSelecting || !startPoint || !isMouseDown) return;
 
-      setCurrentSelection(
-        calculateSelectionFromPoints(startPoint, currentPoint)
-      );
+      const selection = calculateSelectionFromPoints(startPoint, currentPoint);
+      setSelectionBox(selection);
     },
     [
       isSelecting,
       startPoint,
       isMouseDown,
       calculateCoordinates,
-      setCurrentSelection,
+      setSelectionBox,
       setCurrentPosition,
     ]
   );
 
-  const handleMouseLeave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setCurrentPosition(null);
-  };
+  const handleMouseLeave = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setCurrentPosition(null);
+      setSelectionBox(areaToSelectionBox(area));
+    },
+    [areaToSelectionBox, setCurrentPosition, setSelectionBox, area]
+  );
 
-  const handleMouseUp = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsMouseDown(false);
-    setIsSelecting(false);
-    setStartPoint(null);
-  };
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const currentPoint = calculateCoordinates(e.clientX, e.clientY);
+      setIsMouseDown(false);
+      if (mouseMode === "select") {
+        setIsSelecting(false);
+        if (startPoint && currentPoint) {
+          const area = {
+            x1: Math.min(startPoint.x, currentPoint.x),
+            y1: Math.min(startPoint.y, currentPoint.y),
+            x2: Math.max(startPoint.x, currentPoint.x),
+            y2: Math.max(startPoint.y, currentPoint.y),
+          };
+          setArea(area);
+        }
+        setStartPoint(null);
+      }
+    },
+    [
+      startPoint,
+      setArea,
+      calculateCoordinates,
+      setIsSelecting,
+      setIsMouseDown,
+      mouseMode,
+    ]
+  );
 
   const cursorClass = {
     select: "black-crosshair",
@@ -221,23 +284,23 @@ export function PdfDisplay() {
                 inputRef={pageElementRef}
               />
             </Document>
-            {currentSelection && (
+            {selectionBox && (
               <SelectionBox
-                selection={currentSelection}
+                selection={selectionBox}
                 scale={scale}
                 pageElementRef={pageElementRef}
               />
             )}
-            {currentSelection &&
-              columns.length > 0 &&
-              columns.map((column, index) => (
+            {selectionBox &&
+              columnPositions.length > 0 &&
+              columnPositions.map((position, index) => (
                 <ColumnGuide
                   key={index}
                   index={index}
-                  column={column}
+                  position={position}
                   scale={scale}
                   pageElementRef={pageElementRef}
-                  currentSelection={currentSelection}
+                  selection={selectionBox}
                 />
               ))}
           </div>
