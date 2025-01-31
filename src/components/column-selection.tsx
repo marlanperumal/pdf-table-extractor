@@ -40,6 +40,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { toSnakeCase } from "@/utils/textCases";
 
 // Add this new component for the draggable row
 function DraggableTableRow({
@@ -66,7 +67,10 @@ function DraggableTableRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: `column-${index}` });
+  } = useSortable({
+    id: `column-${toSnakeCase(column.name)}`,
+    transition: null,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -163,8 +167,14 @@ export function ColumnSelection() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = parseInt(active.id.toString().split("-")[1]);
-      const newIndex = parseInt(over.id.toString().split("-")[1]);
+      const oldIndex = columns.findIndex(
+        (column) =>
+          toSnakeCase(column.name) === active.id.toString().split("-")[1]
+      );
+      const newIndex = columns.findIndex(
+        (column) =>
+          toSnakeCase(column.name) === over.id.toString().split("-")[1]
+      );
       reorderColumns(oldIndex, newIndex);
     }
   };
@@ -236,26 +246,28 @@ export function ColumnSelection() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <ChevronsUpDown size={14} />
-              </TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>Pos</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Data Type</TableHead>
-            </TableRow>
-          </TableHeader>
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={columns.map(
+              (column) => `column-${toSnakeCase(column.name)}`
+            )}
+            strategy={verticalListSortingStrategy}
           >
-            <SortableContext
-              items={columns.map((_, i) => `column-${i}`)}
-              strategy={verticalListSortingStrategy}
-            >
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <ChevronsUpDown size={14} />
+                  </TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Pos</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Data Type</TableHead>
+                </TableRow>
+              </TableHeader>
               <TableBody>
                 {columns.map((column, i) => (
                   <DraggableTableRow
@@ -270,9 +282,9 @@ export function ColumnSelection() {
                   />
                 ))}
               </TableBody>
-            </SortableContext>
-          </DndContext>
-        </Table>
+            </Table>
+          </SortableContext>
+        </DndContext>
       </CardContent>
     </Card>
   );
