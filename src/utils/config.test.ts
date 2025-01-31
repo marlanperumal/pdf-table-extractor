@@ -8,7 +8,10 @@ const store: State = {
   totalPages: 0,
   scale: 1,
   columns: [],
-  area: { default: null, first: null },
+  area: {
+    default: { x1: 0, y1: 0, x2: 0, y2: 0 },
+    first: { x1: 0, y1: 0, x2: 0, y2: 0 },
+  },
   mouseMode: "select",
   selectionPage: "first",
   uniqueFirstPage: true,
