@@ -12,6 +12,7 @@ import { default as icon } from "@/red-document-icon.svg";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { PdfDisplay } from "@/components/pdf-display";
 import { useStore } from "@/store";
 
@@ -42,6 +43,8 @@ export function PdfViewer() {
   const scale = useStore((state) => state.scale);
   const increaseScale = useStore((state) => state.increaseScale);
   const decreaseScale = useStore((state) => state.decreaseScale);
+  const uniqueFirstPage = useStore((state) => state.uniqueFirstPage);
+  const setUniqueFirstPage = useStore((state) => state.setUniqueFirstPage);
   const [currentPosition, setCurrentPosition] = useState<{
     x: number;
     y: number;
@@ -108,6 +111,16 @@ export function PdfViewer() {
             Next
             <ChevronRight className="h-4 w-4" />
           </Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            disabled={true}
+            checked={uniqueFirstPage}
+            onCheckedChange={(checked) => {
+              setUniqueFirstPage(checked);
+            }}
+          />
+          <div className="text-sm">Unique first page</div>
         </div>
 
         <div className="flex items-center gap-2">

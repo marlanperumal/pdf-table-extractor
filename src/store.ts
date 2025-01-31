@@ -45,6 +45,7 @@ export type State = {
   totalPages: number;
   scale: number;
   mouseMode: MouseMode | null;
+  uniqueFirstPage: boolean;
   selectionPage: "default" | "first";
   columns: Column[];
   area: {
@@ -80,6 +81,7 @@ type Action = {
   setArea: (area: Area) => void;
   clearArea: () => void;
   loadConfig: (config: Config) => void;
+  setUniqueFirstPage: (uniqueFirstPage: boolean) => void;
 };
 
 export const useStore = create<State & Action>()(
@@ -99,6 +101,7 @@ export const useStore = create<State & Action>()(
       default: null,
       first: null,
     },
+    uniqueFirstPage: true,
     setFile: (nextFile) =>
       set(
         (state) => ({
@@ -286,5 +289,7 @@ export const useStore = create<State & Action>()(
       ),
     loadConfig: (config) =>
       set(() => configToStore(config), undefined, "loadConfig"),
+    setUniqueFirstPage: (uniqueFirstPage) =>
+      set(() => ({ uniqueFirstPage }), undefined, "setUniqueFirstPage"),
   }))
 );
