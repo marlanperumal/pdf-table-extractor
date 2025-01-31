@@ -11,6 +11,7 @@ const store: State = {
   area: { default: null, first: null },
   mouseMode: "select",
   selectionPage: "first",
+  uniqueFirstPage: true,
   dateFormat: "%y/%m/%d",
   transDetail: "all",
   dropna: [],
