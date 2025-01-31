@@ -78,7 +78,7 @@ export function ColumnSelection() {
                   size="icon"
                   onClick={() =>
                     addColumn({
-                      position: area?.x1 ?? 0,
+                      position: area?.x2 ?? 0,
                       name: "",
                       type: "string",
                     })

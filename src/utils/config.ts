@@ -107,7 +107,6 @@ interface ConfigStore {
 }
 
 export function configToStore(config: Config): ConfigStore {
-  console.log(config);
   const columns = Object.entries(config.columns).map(([key, value], index) => ({
     name: value,
     type: config.cleaning.numeric.includes(key)
@@ -117,22 +116,35 @@ export function configToStore(config: Config): ConfigStore {
       : "string",
     position: {
       default: config.layout.default.columns[index],
-      first: config.layout.first.columns[index],
+      first: config.layout.first
+        ? config.layout.first.columns[index]
+        : config.layout.default.columns[index],
     },
   })) as Column[];
+  const defaultArea = config.layout.default.area;
+  const firstArea = config.layout.first
+    ? config.layout.first.area
+    : defaultArea;
   const area = {
     default: {
-      y1: config.layout.default.area[0],
-      x1: config.layout.default.area[1],
-      y2: config.layout.default.area[2],
-      x2: config.layout.default.area[3],
+      y1: defaultArea[0],
+      x1: defaultArea[1],
+      y2: defaultArea[2],
+      x2: defaultArea[3],
     } as Area,
-    first: {
-      y1: config.layout.first.area[0],
-      x1: config.layout.first.area[1],
-      y2: config.layout.first.area[2],
-      x2: config.layout.first.area[3],
-    } as Area,
+    first: config.layout.first
+      ? ({
+          y1: firstArea[0],
+          x1: firstArea[1],
+          y2: firstArea[2],
+          x2: firstArea[3],
+        } as Area)
+      : ({
+          y1: defaultArea[0],
+          x1: defaultArea[1],
+          y2: defaultArea[2],
+          x2: defaultArea[3],
+        } as Area),
   };
   return {
     columns,
