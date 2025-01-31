@@ -34,24 +34,27 @@ export function storeToConfig(store: State): Config {
   if (!defaultArea) {
     throw new Error("Default area is not defined");
   }
-  const defaultColumns = store.columns.map((column) =>
+  const firstArea = store.area.first;
+  if (!firstArea) {
+    throw new Error("First area is not defined");
+  }
+  const sortedColumns = store.columns.toSorted(
+    (a, b) => a.position.default - b.position.default
+  );
+  const defaultColumns = sortedColumns.map((column) =>
     Math.round(column.position.default)
   );
   if (!defaultColumns) {
     throw new Error("Default columns are not defined");
   }
-  const firstArea = store.area.first;
-  if (!firstArea) {
-    throw new Error("First area is not defined");
-  }
-  const firstColumns = store.columns.map((column) =>
+  const firstColumns = sortedColumns.map((column) =>
     Math.round(column.position.first)
   );
   if (!firstColumns) {
     throw new Error("First columns are not defined");
   }
 
-  const columnNames = store.columns.map((column) => column.name);
+  const columnNames = sortedColumns.map((column) => column.name);
   if (!columnNames) {
     throw new Error("Columns are not defined");
   }
@@ -80,12 +83,12 @@ export function storeToConfig(store: State): Config {
     columns: Object.fromEntries(
       columnNames.map((column) => [toSnakeCase(column), column])
     ),
-    order: columnNames.map((column) => toSnakeCase(column)),
+    order: store.columns.map((column) => toSnakeCase(column.name)),
     cleaning: {
-      numeric: store.columns
+      numeric: sortedColumns
         .filter((column) => column.type === "number")
         .map((column) => toSnakeCase(column.name)),
-      date: store.columns
+      date: sortedColumns
         .filter((column) => column.type === "date")
         .map((column) => toSnakeCase(column.name)),
       date_format: store.dateFormat ?? "%y/%m/%d",
@@ -107,20 +110,23 @@ interface ConfigStore {
 }
 
 export function configToStore(config: Config): ConfigStore {
-  const columns = Object.entries(config.columns).map(([key, value], index) => ({
-    name: value,
-    type: config.cleaning.numeric.includes(key)
-      ? "number"
-      : config.cleaning.date.includes(key)
-      ? "date"
-      : "string",
-    position: {
-      default: config.layout.default.columns[index],
-      first: config.layout.first
-        ? config.layout.first.columns[index]
-        : config.layout.default.columns[index],
-    },
-  })) as Column[];
+  const columns = config.order.map((key, index) => {
+    const value = config.columns[key];
+    return {
+      name: value,
+      type: config.cleaning.numeric.includes(key)
+        ? "number"
+        : config.cleaning.date.includes(key)
+        ? "date"
+        : "string",
+      position: {
+        default: config.layout.default.columns[index],
+        first: config.layout.first
+          ? config.layout.first.columns[index]
+          : config.layout.default.columns[index],
+      },
+    };
+  }) as Column[];
   const defaultArea = config.layout.default.area;
   const firstArea = config.layout.first
     ? config.layout.first.area
